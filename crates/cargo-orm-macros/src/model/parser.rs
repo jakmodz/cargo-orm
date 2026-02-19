@@ -12,6 +12,7 @@ pub fn parse_model(ast: &mut DeriveInput) -> syn::Result<TableData> {
     }
     
     syn::Result::Ok(TableData {
+        ident: ast.ident.clone(),
         name: table_attribute.name.is_empty().then(|| ast.ident.to_string()).unwrap_or(table_attribute.name),
         fields
     })

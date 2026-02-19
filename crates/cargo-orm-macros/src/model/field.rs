@@ -15,10 +15,12 @@ pub struct ColumnnAttribute{
 }
 
 pub struct Field{
+    #[allow(dead_code)]
     pub iden: Ident,
     pub name: String,
     pub ty: Type,
     pub is_primary_key:bool,
+    #[allow(dead_code)]
     pub is_unique:bool,
     pub is_nullable:bool,
 }

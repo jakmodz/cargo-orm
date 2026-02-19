@@ -10,6 +10,7 @@ pub struct TableAttribute{
 }
 
 pub struct TableData{
+    pub ident: syn::Ident,
     pub name: String,
     pub fields: Vec<Field>,
 }
