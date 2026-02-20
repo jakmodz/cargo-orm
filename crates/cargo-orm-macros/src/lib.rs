@@ -1,5 +1,6 @@
 mod model;
 mod generator;
+mod utils;
 use proc_macro::TokenStream;
 use model::parse_model;
 use syn::{DeriveInput, parse_macro_input};

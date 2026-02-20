@@ -10,7 +10,6 @@ pub enum SqlType{
 }
 
 
-
 pub trait ToSqlType{
     fn to_sql_type(&self)->SqlType;
 }
