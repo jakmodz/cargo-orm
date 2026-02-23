@@ -7,8 +7,8 @@ pub enum SqlType{
     Boolean,
     Date,
     Timestamp,
+    
 }
-
 
 pub trait ToSqlType{
     fn to_sql_type(&self)->SqlType;

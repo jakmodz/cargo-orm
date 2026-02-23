@@ -1,6 +1,7 @@
 mod parser;
 pub mod table;
 pub mod field;
+pub mod primary_key;
 pub use parser::parse_model;
 pub use field::{Field,ColumnnAttribute};
 pub use table::{TableData,TableAttribute};

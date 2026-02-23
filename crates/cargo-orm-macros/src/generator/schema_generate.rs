@@ -8,7 +8,8 @@ pub fn generate_schema_impl(table: &TableData)->TokenStream{
     for field in table.fields.iter() {
         let field_name = &field.name;
         let field_type = &field.ty;
-        let is_primary_key = field.is_primary_key;
+        //TODO: generate schema
+        let is_primary_key = true;
         let is_nullable = field.is_nullable;
         fields.push(quote!{
             cargo_orm_core::schema::table::ColumnSchemaModel::new::<#field_type>(String::from(#field_name),#is_primary_key,#is_nullable,<#field_type>::default())

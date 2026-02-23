@@ -6,3 +6,4 @@ edition = "2024"
 
 [dependencies]
 chrono = {workspace = true}
+deluxe = {workspace = true}
