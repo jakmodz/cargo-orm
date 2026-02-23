@@ -47,8 +47,7 @@ fn parse_fields(fields:&mut Fields)-> syn::Result<(Vec<Field>, Option<PrimaryKey
         } else {
             fields_vec.push(Field::from((col_attr, &*field)));
         }
-        }
-    
+    }
     Ok((fields_vec, primary_key))
 }
 mod tests {

@@ -6,10 +6,14 @@ mod tests {
     #[derive(Model)]
     #[table(name = "users")]
     struct User {
-        _id: i32,
-        _name: String,
-        _email: Option<String>,
-    } 
+        #[Column(name = "id")]
+        #[PrimaryKey]
+        id: i32,
+        #[Column(name = "username", unique)]
+        username: String,
+        #[Column(name = "email", unique = false, nullable)]
+        email: Option<String>,
+    }
     
     #[test]
     fn test_table_name(){
@@ -20,12 +24,10 @@ mod tests {
     fn test_table_schema(){
         let schema = User::get_schema();
         assert_eq!(schema.name,"users");
-        assert_eq!(schema.fields[0].name,"_id");
-        assert_eq!(schema.fields[0].sql_type,SqlType::Integer);
-        assert_eq!(schema.fields[1].name,"_name");
+        assert_eq!(schema.fields[0].name,"name");
+        assert_eq!(schema.fields[0].sql_type,SqlType::Varchar(255));
+        assert_eq!(schema.fields[1].name,"email");
         assert_eq!(schema.fields[1].sql_type,SqlType::Varchar(255));
-        assert_eq!(schema.fields[2].name,"_email");
-        assert_eq!(schema.fields[2].sql_type,SqlType::Varchar(255));
     }
     
 }

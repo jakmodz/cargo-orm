@@ -1,6 +1,6 @@
 use deluxe::ExtractAttributes;
 
-use crate::model::{Field, primary_key::PrimaryKeyField};
+use crate::model::{Field, primary_key::{PrimaryKeyField}};
 
 #[derive(ExtractAttributes)]
 #[deluxe(attributes(table))]
