@@ -3,8 +3,6 @@ use crate::model::{ColumnnAttribute, Field,TableAttribute, TableData,primary_key
 
 pub fn parse_model(ast: &mut DeriveInput) -> syn::Result<TableData> {
     let table_attribute: TableAttribute = deluxe::extract_attributes(ast)?;
-    #[allow(unused_assignments)]
-    let mut fields: Vec<Field> = Vec::new();
     let (fields, primary_key) = if let syn::Data::Struct(s) = &mut ast.data {
         parse_fields(&mut s.fields)?
     } else {
@@ -97,5 +95,39 @@ mod tests {
         let result = parse_model(&mut input);
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().to_string(), "Only one field can be marked with #[PrimaryKey]");
+    }
+    #[test]
+    fn fail_missing_primary_key(){
+        let mut input: DeriveInput = parse_quote! {
+            #[table(name = "users")]
+            struct User {
+                #[Column(name = "id")]
+                id: i32,
+                #[Column(name = "username", unique)]
+                username: String,
+                #[Column(name = "email", unique = false, nullable)]
+                email: Option<String>,
+            }
+        };
+        let result = parse_model(&mut input);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err().to_string(), "A Model must have exactly one field marked with #[PrimaryKey]");
+    }
+    #[test]
+    fn primary_key_with_generation_strategy(){
+        let mut input: DeriveInput = parse_quote! {
+            #[table(name = "users")]
+            struct User {
+                #[Column(name = "id")]
+                #[PrimaryKey(generation_strategy = GenerationType::AutoIncrement)]
+                id: i32,
+                #[Column(name = "username", unique)]
+                username: String,
+                #[Column(name = "email", unique = false, nullable)]
+                email: Option<String>,
+            }
+        };
+        let table_data = parse_model(&mut input).unwrap();
+        assert_eq!(table_data.primary_key.generation_strategy.unwrap(),GenerationType::AutoIncrement);
     }
 }
