@@ -1,6 +1,4 @@
-
-#[derive(deluxe::ParseMetaItem)]
-#[derive(Debug,PartialEq, Eq)]
+#[derive(deluxe::ParseMetaItem, Debug, PartialEq, Eq)]
 pub enum GenerationType {
     AutoIncrement,
 }

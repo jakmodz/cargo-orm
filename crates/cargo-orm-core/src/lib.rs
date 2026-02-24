@@ -1,4 +1,4 @@
-mod model;
 mod driver;
-pub mod types;
+mod model;
 pub mod schema;
+pub mod types;

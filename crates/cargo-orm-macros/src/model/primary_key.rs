@@ -1,16 +1,16 @@
+use crate::model::ColumnnAttribute;
 use cargo_orm_core::types::generation_strategy::GenerationType;
 use deluxe::ExtractAttributes;
 use syn::Type;
-use crate::model::ColumnnAttribute;
 
 #[derive(ExtractAttributes)]
 #[deluxe(attributes(PrimaryKey))]
-pub struct PrimaryKeyAttribute{
-    #[deluxe(default = None)] 
+pub struct PrimaryKeyAttribute {
+    #[deluxe(default = None)]
     pub(crate) generation_strategy: Option<GenerationType>,
 }
 #[derive(Debug)]
-pub struct PrimaryKeyField{
+pub struct PrimaryKeyField {
     pub iden: syn::Ident,
     pub name: String,
     pub ty: Type,
