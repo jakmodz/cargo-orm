@@ -11,6 +11,9 @@ pub struct ColumnnAttribute {
     pub(crate) unique: bool,
     #[deluxe(default = false)]
     pub(crate) nullable: bool,
+    #[deluxe(default = None)]
+    pub(crate) column_definition: Option<String>,
+    
 }
 #[derive(Clone, Debug)]
 pub struct Field {
@@ -21,6 +24,7 @@ pub struct Field {
     #[allow(dead_code)]
     pub is_unique: bool,
     pub is_nullable: bool,
+    pub column_definition: Option<String>,
 }
 impl From<(ColumnnAttribute, &syn::Field)> for Field {
     fn from((attr, syn_field): (ColumnnAttribute, &syn::Field)) -> Self {
@@ -29,6 +33,7 @@ impl From<(ColumnnAttribute, &syn::Field)> for Field {
         } else {
             attr.name
         };
+        
         let is_nullable = attr.nullable || is_option_type(&syn_field.ty);
         Field {
             iden: syn_field.ident.clone().unwrap(),
@@ -36,6 +41,7 @@ impl From<(ColumnnAttribute, &syn::Field)> for Field {
             ty: syn_field.ty.clone(),
             is_unique: attr.unique,
             is_nullable,
+            column_definition: attr.column_definition
         }
     }
 }
