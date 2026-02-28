@@ -42,7 +42,7 @@ fn parse_fields(fields: &mut Fields) -> syn::Result<(Vec<Field>, Option<PrimaryK
 
         let col_attr: ColumnnAttribute = deluxe::extract_attributes(field)?;
         let pk_attr: PrimaryKeyAttribute = deluxe::extract_attributes(field)?;
-
+        
         if has_pk {
             if primary_key.is_some() {
                 return Err(syn::Error::new(
@@ -63,7 +63,7 @@ mod tests {
         use super::*;
         use syn::parse_quote;
         let input: DeriveInput = parse_quote! {
-            #[table(name = "users")]
+            #[Table(name = "users")]
             struct User {
                 #[Column(name = "id")]
                 #[PrimaryKey]
@@ -85,7 +85,7 @@ mod tests {
         use super::*;
         use syn::parse_quote;
         let mut input: DeriveInput = parse_quote! {
-            #[table(name = "users")]
+            #[Table(name = "users")]
             struct User {
                 #[Column(name = "id")]
                 #[PrimaryKey]
@@ -109,7 +109,7 @@ mod tests {
         use super::*;
         use syn::parse_quote;
         let mut input: DeriveInput = parse_quote! {
-            #[table(name = "users")]
+            #[Table(name = "users")]
             struct User {
                 #[Column(name = "id")]
                 id: i32,
@@ -132,10 +132,10 @@ mod tests {
         use cargo_orm_core::types::generation_strategy::GenerationType;
         use syn::parse_quote;
         let mut input: DeriveInput = parse_quote! {
-            #[table(name = "users")]
+            #[Table(name = "users")]
             struct User {
                 #[Column(name = "id")]
-                #[PrimaryKey(generation_strategy = GenerationType::AutoIncrement)]
+                #[PrimaryKey(generation_strategy = {auto_increment})]
                 id: i32,
                 #[Column(name = "username", unique)]
                 username: String,
@@ -147,6 +147,28 @@ mod tests {
         assert_eq!(
             table_data.primary_key.generation_strategy.unwrap(),
             GenerationType::AutoIncrement
+        );
+    }
+    #[test]
+    fn test_column_definition() {
+        use super::*;
+        use syn::parse_quote;
+        let mut input: DeriveInput = parse_quote! {
+            #[Table(name = "users")]
+            struct User {
+                #[Column(name = "id")]
+                #[PrimaryKey]
+                id: i32,
+                #[Column(name = "username", column_definition = "INTEGER",unique)]
+                username: String,
+                #[Column(name = "email", unique = false, nullable)]
+                email: Option<String>,
+            }
+        };
+        let table_data = parse_model(&mut input).unwrap();
+        assert_eq!(
+            table_data.fields[0].column_definition,
+            Some(String::from("INTEGER"))
         );
     }
 }
