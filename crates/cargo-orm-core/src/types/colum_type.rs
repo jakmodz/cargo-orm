@@ -18,6 +18,8 @@ pub enum SqlType {
     Date,
     /// Represents a timestamp value.
     Timestamp,
+    /// Special variant for column defined with a specific SQL type.
+    Custom(String),
 }
 /// Trait for casting rust types to sql types
 pub trait ToSqlType {
