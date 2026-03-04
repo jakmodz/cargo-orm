@@ -1,5 +1,5 @@
 use crate::model::{
-    ColumnnAttribute, Field, TableAttribute, TableData,
+    ColumnAttribute, Field, TableAttribute, TableData,
     primary_key::{PrimaryKeyAttribute, PrimaryKeyField},
 };
 use syn::{DeriveInput, Fields, spanned::Spanned};
@@ -40,7 +40,7 @@ fn parse_fields(fields: &mut Fields) -> syn::Result<(Vec<Field>, Option<PrimaryK
     for field in fields.iter_mut() {
         let has_pk = field.attrs.iter().any(|a| a.path().is_ident("PrimaryKey"));
 
-        let col_attr: ColumnnAttribute = deluxe::extract_attributes(field)?;
+        let col_attr: ColumnAttribute = deluxe::extract_attributes(field)?;
         let pk_attr: PrimaryKeyAttribute = deluxe::extract_attributes(field)?;
         
         if has_pk {

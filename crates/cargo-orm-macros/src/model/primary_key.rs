@@ -1,4 +1,4 @@
-use crate::model::ColumnnAttribute;
+use crate::model::field::ColumnAttribute;
 use cargo_orm_core::types::generation_strategy::GenerationType;
 use deluxe::ExtractAttributes;
 use syn::Type;
@@ -11,15 +11,16 @@ pub struct PrimaryKeyAttribute {
 }
 #[derive(Debug)]
 pub struct PrimaryKeyField {
+    #[allow(unused)]
     pub iden: syn::Ident,
     pub name: String,
     pub ty: Type,
     pub generation_strategy: Option<GenerationType>,
 }
 
-impl From<(ColumnnAttribute, PrimaryKeyAttribute, &syn::Field)> for PrimaryKeyField {
+impl From<(ColumnAttribute, PrimaryKeyAttribute, &syn::Field)> for PrimaryKeyField {
     fn from(
-        (col_attr, pk_attr, syn_field): (ColumnnAttribute, PrimaryKeyAttribute, &syn::Field),
+        (col_attr, pk_attr, syn_field): (ColumnAttribute, PrimaryKeyAttribute, &syn::Field),
     ) -> Self {
         let field_name = if col_attr.name.is_empty() {
             syn_field.ident.as_ref().unwrap().to_string()

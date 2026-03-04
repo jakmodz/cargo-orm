@@ -4,7 +4,7 @@ use syn::{Ident, Type};
 use crate::utils::is_option_type;
 #[derive(ExtractAttributes)]
 #[deluxe(attributes(Column))]
-pub struct ColumnnAttribute {
+pub struct ColumnAttribute {
     #[deluxe(default = String::from(""))]
     pub(crate) name: String,
     #[deluxe(default = false)]
@@ -26,8 +26,8 @@ pub struct Field {
     pub is_nullable: bool,
     pub column_definition: Option<String>,
 }
-impl From<(ColumnnAttribute, &syn::Field)> for Field {
-    fn from((attr, syn_field): (ColumnnAttribute, &syn::Field)) -> Self {
+impl From<(ColumnAttribute, &syn::Field)> for Field {
+    fn from((attr, syn_field): (ColumnAttribute, &syn::Field)) -> Self {
         let field_name = if attr.name.is_empty() {
             syn_field.ident.as_ref().unwrap().to_string()
         } else {
