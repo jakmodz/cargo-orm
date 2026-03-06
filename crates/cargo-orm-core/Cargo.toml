@@ -3,7 +3,7 @@ name = "cargo-orm-core"
 version = "0.1.0"
 edition = "2024"
 
-
 [dependencies]
-chrono = {workspace = true}
-deluxe = {workspace = true}
+chrono  = { workspace = true }
+deluxe  = { workspace = true }
+thiserror = { workspace = true }

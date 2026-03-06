@@ -1,6 +1,8 @@
+pub mod dialect;
+
 #[cfg(test)]
 mod tests {
-    use cargo_orm_core::{schema::table::TableSchema, types::colum_type::SqlType};
+    use cargo_orm_core::{schema::table::TableSchema, types::column_type::SqlType};
     use cargo_orm_macros::Model;
 
     #[derive(Model)]
