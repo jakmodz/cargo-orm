@@ -1,7 +1,33 @@
+use std::collections::HashSet;
+
+use thiserror::Error;
+
 use crate::{types::{
     column_type::{SqlType, ToSqlType},
     generation_strategy::GenerationType,
 }};
+
+/// **Validation of primary keys like no primary in table or multiple of them is handled in parsing IR of table**
+#[derive(Error,Debug)]
+pub enum SchemaValidationError{
+    #[error("Table {table_name} has mulitple fields with the same name: {field_name:?}")]
+    MulitpleFiledsWithSameName{table_name:String, field_name:String},
+    #[error("Table '{table_name}' has a column with an empty name")]
+    EmptyColumnName { table_name: String },
+    #[error("Table {0} has a primary key with generation strategy that is not supported for its type")]
+    UnsupportedGenerationStrategy(String),
+    #[error("Table has an empty name")]
+    EmptyTableName,
+    #[error("Table '{table_name}' has multiple fields with the same name: '{field_name}'")]
+    MultipleFieldsWithSameName { table_name: String, field_name: String },
+    #[error("Table '{table_name}': primary key name '{pk_name}' collides with a column name")]
+    PrimaryKeyNameCollidesWithColumn { table_name: String, pk_name: String },
+    #[error("Table '{0}': AutoIncrement requires an Integer primary key, but got {1:?}")]
+    AutoIncrementRequiresInteger(String, SqlType),
+    #[error("Table '{0}': primary key has an unsupported type {1:?}")]
+    UnsupportedPrimaryKeyType(String, SqlType),
+    
+}
 
 pub trait TableSchema {
     /// Method to get the table name
@@ -48,6 +74,60 @@ pub struct PrimaryKeyModel {
     /// Type of the primary key
     pub ty: SqlType,
 }
+impl TableSchemaModel {
+    pub fn validate(&self) -> Result<(), SchemaValidationError> {
+        if self.name.is_empty() {
+            return Err(SchemaValidationError::EmptyTableName);
+        }
+
+        let pk = &self.primary_key;
+
+        match &pk.ty {
+            SqlType::Boolean | SqlType::Float | SqlType::Double => {
+                return Err(SchemaValidationError::UnsupportedPrimaryKeyType(
+                    self.name.clone(),
+                    pk.ty.clone(),
+                ));
+            }
+            _ => {}
+        }
+
+        if let Some(GenerationType::AutoIncrement) = &pk.generation_type {
+            if pk.ty != SqlType::Integer {
+                return Err(SchemaValidationError::AutoIncrementRequiresInteger(
+                    self.name.clone(),
+                    pk.ty.clone(),
+                ));
+            }
+        }
+
+        let mut seen: HashSet<String> = HashSet::new();
+        seen.insert(pk.name.clone());
+
+        for col in &self.fields {
+            if col.name.is_empty() {
+                return Err(SchemaValidationError::EmptyColumnName {
+                    table_name: self.name.clone(),
+                });
+            }
+
+            if !seen.insert(col.name.clone()) {
+                if col.name == pk.name {
+                    return Err(SchemaValidationError::PrimaryKeyNameCollidesWithColumn {
+                        table_name: self.name.clone(),
+                        pk_name: pk.name.clone(),
+                    });
+                }
+                return Err(SchemaValidationError::MultipleFieldsWithSameName {
+                    table_name: self.name.clone(),
+                    field_name: col.name.clone(),
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
 impl ColumnSchemaModel {
     pub fn new<T: ToSqlType>(name: String, is_nullable: bool, is_unique: bool, sql_type: SqlType) -> Self {
         Self {
