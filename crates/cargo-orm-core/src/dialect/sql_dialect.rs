@@ -1,29 +1,117 @@
-use crate::{schema::table::{PrimaryKeyModel, TableSchemaModel}, types::column_type::SqlType};
+use crate::{
+    schema::table::{
+        ColumnSchemaModel, IndexModel, PrimaryKeyModel, SchemaValidationError, TableSchemaModel,
+    },
+    types::column_type::SqlType,
+};
 
+static PRIMARY_KEY_TYPE: &str = "PRIMARY KEY";
+static TAB: &str = "    ";
 
-static PRIMARY_KEY_TYPE: &'static str = "PRIMARY KEY";
-static NOT_NULL: &'static str = "NOT NULL";
+/// Trait representing a SQL dialect.
+/// Implement `cast_type` to support a new database engine; all DDL methods have
+/// working defaults built on top of it.
 pub trait SqlDialect {
-    
-    fn cast_type(&self,sql_type: &SqlType) -> String;
-    fn cast_primary_key(&self,priamry_key:&PrimaryKeyModel) -> String{
-        format!("    {} {} {}\n", &priamry_key.name, 
-            self.cast_type(&priamry_key.ty),
+    /// Maps an [`SqlType`] to its database-specific type name.
+    fn cast_type(&self, sql_type: &SqlType) -> String;
+
+    /// Formats the PRIMARY KEY column definition (no trailing newline or comma).
+    fn cast_primary_key(&self, primary_key: &PrimaryKeyModel) -> String {
+        format!(
+            "{}{} {} {}",
+            TAB,
+            primary_key.name,
+            self.cast_type(&primary_key.ty),
             PRIMARY_KEY_TYPE
         )
     }
-    /// Generates the DDL for the given schema.
-    /// * It is default implementation for dialect *
-    fn generate_ddl(&self, schema: &TableSchemaModel) -> String {
-        let mut ddl = format!("CREATE TABLE {} (\n", schema.name);
-        ddl.push_str(self.cast_primary_key(&schema.primary_key).as_str());
-        for field in schema.fields.iter() {
-            ddl.push_str(&format!("    {} {}{}\n", field.name, 
-                self.cast_type(&field.sql_type), 
-                if field.is_nullable { "" } else { NOT_NULL })
-            );
+
+    /// Formats a single non-PK column definition (no trailing newline or comma).
+    fn cast_column(&self, column: &ColumnSchemaModel) -> String {
+        let mut s = format!(
+            "{}{} {}",
+            TAB,
+            column.name,
+            self.cast_type(&column.sql_type)
+        );
+        if column.is_nullable {
+            s.push_str(" NULL");
+        } else {
+            s.push_str(" NOT NULL");
         }
-        ddl.push_str(");\n");
-        ddl
+        if column.is_unique {
+            s.push_str(" UNIQUE");
+        }
+        s
+    }
+    /// Generates `CREATE TABLE … (…);`.
+    /// Validates the schema first — returns [`SchemaValidationError`] if invalid.
+    fn generate_ddl(
+        &self,
+        schema: &TableSchemaModel,
+    ) -> Result<String, SchemaValidationError> {
+        self.build_create_table_ddl(schema, false)
+    }
+
+    fn generate_ddl_if_not_exists(
+        &self,
+        schema: &TableSchemaModel,
+    ) -> Result<String, SchemaValidationError> {
+        self.build_create_table_ddl(schema, true)
+    }
+
+    fn build_create_table_ddl(
+        &self,
+        schema: &TableSchemaModel,
+        if_not_exists: bool,
+    ) -> Result<String, SchemaValidationError> {
+        schema.validate()?;
+        let guard = if if_not_exists { "IF NOT EXISTS " } else { "" };
+
+        let mut columns: Vec<String> = Vec::with_capacity(1 + schema.fields.len());
+        columns.push(self.cast_primary_key(&schema.primary_key));
+        for field in &schema.fields {
+            columns.push(self.cast_column(field));
+        }
+
+        Ok(format!(
+            "CREATE TABLE {}{} (\n{}\n);\n",
+            guard,
+            schema.name,
+            columns.join(",\n")
+        ))
+    }
+
+    /// Generates `DROP TABLE <name>;`.
+    fn generate_drop_table_ddl(&self, table_name: &str) -> String {
+        format!("DROP TABLE {};\n", table_name)
+    }
+
+    /// Generates `DROP TABLE IF EXISTS <name>;`.
+    fn generate_drop_table_if_exists_ddl(&self, table_name: &str) -> String {
+        format!("DROP TABLE IF EXISTS {};\n", table_name)
+    }
+
+    /// Generates `CREATE [UNIQUE] INDEX IF NOT EXISTS <name> ON <table> (<cols>);`.
+    fn generate_create_index_ddl(&self, table_name: &str, index: &IndexModel) -> String {
+        let unique = if index.unique { "UNIQUE " } else { "" };
+        let columns = index.fields.join(", ");
+        format!(
+            "CREATE {}INDEX IF NOT EXISTS {} ON {} ({});\n",
+            unique, index.name, table_name, columns
+        )
+    }
+
+    /// Generates the full DDL for a table:
+    /// `CREATE TABLE IF NOT EXISTS` + one `CREATE INDEX` per entry in `schema.indexes`.
+    fn generate_full_ddl(
+        &self,
+        schema: &TableSchemaModel,
+    ) -> Result<String, SchemaValidationError> {
+        let mut ddl = self.generate_ddl_if_not_exists(schema)?;
+        for index in &schema.indexes {
+            ddl.push_str(&self.generate_create_index_ddl(&schema.name, index));
+        }
+        Ok(ddl)
     }
 }
