@@ -3,7 +3,8 @@ name = "cargo-orm-core"
 version = "0.1.0"
 edition = "2024"
 [features]
-sqlite = ["sqlx/sqlite","sqlx/runtime-tokio"]
+default = ["sqlite"]
+sqlite = ["dep:sqlx", "sqlx/sqlite", "sqlx/runtime-tokio"]
 [dependencies]
 chrono  = { workspace = true }
 deluxe  = { workspace = true }
