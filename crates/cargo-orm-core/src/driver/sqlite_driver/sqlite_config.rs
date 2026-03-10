@@ -21,3 +21,13 @@ impl ConnectionConfig for SqliteConfig {
         self.connection_timeout_ms
     }
 }
+impl Default for SqliteConfig {
+    fn default() -> Self {
+        Self {
+            url: String::from("sqlite::memory:"),
+            max_connections: 1,
+            min_connections: 0,
+            connection_timeout_ms: 3000,
+        }
+    }
+}
