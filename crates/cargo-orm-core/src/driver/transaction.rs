@@ -11,10 +11,12 @@ pub struct Transaction<P: ConnectionPool> {
 }
 
 impl<P: ConnectionPool> Transaction<P> {
+    /// Creates a new transaction with the given connection.
     pub fn new(conn: P::Conn) -> Self {
         Self { conn: Some(conn) }
     }
-
+    
+    /// Commits the transaction.
     pub async fn commit(mut self) -> Result<(), CargoOrmError> {
         if let Some(mut conn) = self.conn.take() {
             conn.commit_transaction().await?;
@@ -23,7 +25,7 @@ impl<P: ConnectionPool> Transaction<P> {
             Err(CargoOrmError::DriverError(DriverError::ConnectionClosed))
         }
     }
-
+    /// Rolls back the transaction.
     pub async fn rollback(mut self) -> Result<(), CargoOrmError> {
         if let Some(mut conn) = self.conn.take() {
             conn.rollback_transaction().await?;

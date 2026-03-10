@@ -5,7 +5,7 @@ use crate::{
     },
     error::CargoOrmError,
 };
-
+/// Represents a SQL driver that provides connection pooling and transaction management.
 pub trait SqlDriver: Sized + Sync + Send {
     type Pool: ConnectionPool;
 
