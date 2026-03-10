@@ -2,10 +2,12 @@ use sqlx::sqlite::SqlitePoolOptions;
 
 use crate::{
     driver::{
+        connection::Connection,
         connection_config::ConnectionConfig,
         connection_pool::{ConnectionGuard, ConnectionPool},
         error::DriverError,
         sqlite_driver::sqlite_config::SqliteConfig,
+        transaction::Transaction,
     },
     error::CargoOrmError,
 };
@@ -13,7 +15,6 @@ use std::time::Duration;
 impl ConnectionPool for sqlx::SqlitePool {
     type Conn = sqlx::pool::PoolConnection<sqlx::Sqlite>;
     type Config = SqliteConfig;
-
     async fn new_pool(config: Self::Config) -> Result<Self, CargoOrmError> {
         config.validate()?;
         let pool = SqlitePoolOptions::new()
@@ -23,6 +24,7 @@ impl ConnectionPool for sqlx::SqlitePool {
             .connect(config.url())
             .await
             .map_err(DriverError::Sqlx)?;
+
         Ok(pool)
     }
 
@@ -42,5 +44,10 @@ impl ConnectionPool for sqlx::SqlitePool {
     async fn close(self) -> Result<(), CargoOrmError> {
         sqlx::SqlitePool::close(&self).await;
         Ok(())
+    }
+    async fn begin_transaction(&self) -> Result<Transaction<Self>, CargoOrmError> {
+        let mut conn = self.acquire().await.map_err(DriverError::Sqlx)?;
+        conn.begin_transaction().await?;
+        Ok(Transaction::new(conn))
     }
 }

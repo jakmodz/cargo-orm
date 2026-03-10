@@ -20,4 +20,28 @@ impl crate::driver::connection::Connection for PoolConnection<sqlx::Sqlite> {
     async fn is_valid(&mut self) -> bool {
         self.ping().await.is_ok()
     }
+
+    async fn begin_transaction(&mut self) -> Result<(), CargoOrmError> {
+        sqlx::query("BEGIN IMMEDIATE")
+            .execute(&mut **self)
+            .await
+            .map_err(DriverError::Sqlx)?;
+        Ok(())
+    }
+
+    async fn commit_transaction(&mut self) -> Result<(), CargoOrmError> {
+        sqlx::query("COMMIT")
+            .execute(self.as_mut())
+            .await
+            .map_err(DriverError::Sqlx)?;
+        Ok(())
+    }
+
+    async fn rollback_transaction(&mut self) -> Result<(), CargoOrmError> {
+        sqlx::query("ROLLBACK")
+            .execute(self.as_mut())
+            .await
+            .map_err(DriverError::Sqlx)?;
+        Ok(())
+    }
 }

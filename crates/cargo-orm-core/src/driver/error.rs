@@ -11,4 +11,6 @@ pub enum DriverError {
     #[cfg(feature = "sqlite")]
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
+    #[error("connection closed")]
+    ConnectionClosed,
 }

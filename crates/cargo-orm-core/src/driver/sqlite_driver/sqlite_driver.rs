@@ -18,4 +18,11 @@ impl SqlDriver for SqliteDriver {
     fn pool(&self) -> &Self::Pool {
         &self.pool
     }
+    async fn transaction(
+        &self,
+    ) -> Result<crate::driver::transaction::Transaction<Self::Pool>, crate::error::CargoOrmError>
+    {
+        let tx = self.pool.begin_transaction().await?;
+        Ok(tx)
+    }
 }
