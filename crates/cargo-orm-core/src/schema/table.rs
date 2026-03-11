@@ -94,13 +94,13 @@ impl TableSchemaModel {
             _ => {}
         }
 
-        if let Some(GenerationType::AutoIncrement) = &pk.generation_type {
-            if pk.ty != SqlType::Integer {
-                return Err(SchemaValidationError::AutoIncrementRequiresInteger(
-                    self.name.clone(),
-                    pk.ty.clone(),
-                ));
-            }
+        if let Some(GenerationType::AutoIncrement) = &pk.generation_type
+            && pk.ty != SqlType::Integer
+        {
+            return Err(SchemaValidationError::AutoIncrementRequiresInteger(
+                self.name.clone(),
+                pk.ty.clone(),
+            ));
         }
 
         let mut seen: HashSet<String> = HashSet::new();
