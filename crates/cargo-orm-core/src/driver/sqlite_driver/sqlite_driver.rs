@@ -1,18 +1,19 @@
-use sqlx::SqlitePool;
-
-use crate::driver::{connection_pool::ConnectionPool, sql_driver::SqlDriver};
+use crate::driver::{
+    connection_pool::ConnectionPool, sql_driver::SqlDriver,
+    sqlite_driver::sqlite_connection_pool::CargoSqlitePool,
+};
 
 pub struct SqliteDriver {
-    pool: SqlitePool,
+    pool: CargoSqlitePool,
 }
 
 impl SqlDriver for SqliteDriver {
-    type Pool = SqlitePool;
+    type Pool = CargoSqlitePool;
 
     async fn new(
         config: <Self::Pool as crate::driver::connection_pool::ConnectionPool>::Config,
     ) -> Result<Self, crate::error::CargoOrmError> {
-        let pool = SqlitePool::new_pool(config).await?;
+        let pool = CargoSqlitePool::new_pool(config).await?;
         Ok(Self { pool })
     }
     fn pool(&self) -> &Self::Pool {
