@@ -76,7 +76,7 @@ impl ConnectionConfig for SqliteConfig {
     where
         Self: Sized,
     {
-        let url = std::env::var("DATABASE_URL").unwrap_or(String::new());
+        let url = std::env::var("DATABASE_URL").unwrap_or_default();
         if url.is_empty() {
             return Err(ConnectionConfigError::EnvFileNotFound);
         }
