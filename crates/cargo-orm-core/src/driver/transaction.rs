@@ -15,7 +15,7 @@ impl<P: ConnectionPool> Transaction<P> {
     pub fn new(conn: P::Conn) -> Self {
         Self { conn: Some(conn) }
     }
-    
+
     /// Commits the transaction.
     pub async fn commit(mut self) -> Result<(), CargoOrmError> {
         if let Some(mut conn) = self.conn.take() {

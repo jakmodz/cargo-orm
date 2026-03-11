@@ -24,7 +24,7 @@ pub trait ConnectionConfig {
     fn connection_timeout_ms(&self) -> u64 {
         5000
     }
-    
+
     fn validate(&self) -> Result<(), ConnectionConfigError> {
         if self.url().is_empty() {
             return Err(ConnectionConfigError::EmptyUrl);

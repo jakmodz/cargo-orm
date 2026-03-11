@@ -1,5 +1,8 @@
 pub mod dialect;
 pub mod from_row_impl;
+// #[cfg(feature= "sqlite")]
+// mod sqlite_test;
+
 #[cfg(test)]
 mod tests {
     use cargo_orm_core::{schema::table::TableSchema, types::column_type::SqlType};

@@ -3,7 +3,7 @@ use crate::{dialect::sql_dialect::SqlDialect, types::column_type::SqlType};
 pub struct SqliteDialect;
 
 impl SqlDialect for SqliteDialect {
-    fn cast_type(&self, sql_type: &crate::types::column_type::SqlType) -> String {
+    fn cast_type(&self, sql_type: &SqlType) -> String {
         match sql_type {
             SqlType::Integer => "INTEGER",
             SqlType::Float => "REAL",

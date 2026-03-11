@@ -10,8 +10,8 @@ use crate::types::{
 /// **Validation of primary keys like no primary in table or multiple of them is handled in parsing IR of table**
 #[derive(Error, Debug)]
 pub enum SchemaValidationError {
-    #[error("Table {table_name} has mulitple fields with the same name: {field_name:?}")]
-    MulitpleFieldsWithSameName {
+    #[error("Table {table_name} has multiple fields with the same name: {field_name:?}")]
+    MultipleFieldsWithSameName {
         table_name: String,
         field_name: String,
     },
@@ -120,7 +120,7 @@ impl TableSchemaModel {
                         pk_name: pk.name.clone(),
                     });
                 }
-                return Err(SchemaValidationError::MulitpleFieldsWithSameName {
+                return Err(SchemaValidationError::MultipleFieldsWithSameName {
                     table_name: self.name.clone(),
                     field_name: col.name.clone(),
                 });

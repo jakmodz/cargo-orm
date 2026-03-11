@@ -9,7 +9,7 @@ use syn::{DeriveInput, parse_macro_input};
 
 /// Derive macro that generates ORM boilerplate for database entity.
 ///
-/// Annotate a struct with '#[derive(Model)]' to automaticly implement all needed traits
+/// Annotate a struct with '#[derive(Model)]' to automatically implement all needed traits
 ///
 /// # Container Attributes
 ///
@@ -34,7 +34,7 @@ use syn::{DeriveInput, parse_macro_input};
 /// ```ignore
 /// #[Model]
 /// struct User {
-///     #[Column(name= "nm",unique = true,nullable = false)]   
+///     #[Column(name= "nm",unique = true,nullable = false)]
 ///     name: String
 ///}
 /// ```
@@ -45,7 +45,7 @@ use syn::{DeriveInput, parse_macro_input};
 /// ```ignore
 /// #[Model]
 /// struct User {
-///     #[Column(name= "nm",unique = true,nullable = false)]   
+///     #[Column(name= "nm",unique = true,nullable = false)]
 ///     #[PrimaryKey(generation_strategy = {GenerationStrategy::AutoIncrement})]
 ///     id: i64
 ///}
@@ -55,10 +55,10 @@ use syn::{DeriveInput, parse_macro_input};
 /// #[Model]
 /// #[Table(name = "users")]
 /// struct User {
-///     #[Column(name= "id",unique = true,nullable = false)]   
+///     #[Column(name= "id",unique = true,nullable = false)]
 ///     #[PrimaryKey(generation_strategy = GenerationStrategy::AutoIncrement)]
 ///     id: i64
-///     #[Column(name= "nm",unique = true,nullable = false)]   
+///     #[Column(name= "nm",unique = true,nullable = false)]
 ///     name: String
 ///}
 /// ```

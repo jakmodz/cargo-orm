@@ -1,0 +1,27 @@
+[[repos]]
+repo = "https://github.com/pre-commit/pre-commit-hooks"
+rev = "v4.6.0"
+hooks = [
+    { id = "trailing-whitespace" },
+    { id = "end-of-file-fixer" },
+    { id = "check-merge-conflict" },
+    { id = "check-toml" },
+]
+[[repos]]
+repo = "local"
+hooks = [
+    {
+        id = "fmt",
+        name = "cargo fmt",
+        language = "rust",
+        files = '^.*\.(rs|toml)$',
+        pass_filenames = false,
+        entry = "cargo fmt"
+    }
+]
+[[repos]]
+repo = "https://github.com/crate-ci/typos"
+rev = "v1.23.3"
+hooks = [
+    { id = "typos" }
+]

@@ -1,10 +1,61 @@
 use crate::driver::connection_config::{ConnectionConfig, ConnectionConfigError};
 
+/// Configuration for the SQLite driver.
 pub struct SqliteConfig {
+    /// URL to the SQLite database.
     pub url: String,
+    /// Maximum number of connections in the pool.
     pub max_connections: usize,
+    /// Minimum number of connections in the pool.
     pub min_connections: usize,
+    /// Connection timeout in milliseconds.
     pub connection_timeout_ms: u64,
+}
+pub struct SqliteConfigBuilder {
+    url: String,
+    max_connections: usize,
+    min_connections: usize,
+    connection_timeout_ms: u64,
+}
+
+impl SqliteConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            url: String::new(),
+            max_connections: 1,
+            min_connections: 0,
+            connection_timeout_ms: 30000,
+        }
+    }
+    pub fn url(self, url: String) -> Self {
+        Self { url, ..self }
+    }
+    pub fn max_connections(self, max_connections: usize) -> Self {
+        Self {
+            max_connections,
+            ..self
+        }
+    }
+    pub fn min_connections(self, min_connections: usize) -> Self {
+        Self {
+            min_connections,
+            ..self
+        }
+    }
+    pub fn connection_timeout_ms(self, connection_timeout_ms: u64) -> Self {
+        Self {
+            connection_timeout_ms,
+            ..self
+        }
+    }
+    pub fn build(self) -> SqliteConfig {
+        SqliteConfig {
+            url: self.url,
+            max_connections: self.max_connections,
+            min_connections: self.min_connections,
+            connection_timeout_ms: self.connection_timeout_ms,
+        }
+    }
 }
 
 impl ConnectionConfig for SqliteConfig {
@@ -55,7 +106,33 @@ impl Default for SqliteConfig {
             url: String::from("sqlite::memory:"),
             max_connections: 1,
             min_connections: 0,
-            connection_timeout_ms: 3000,
+            connection_timeout_ms: 5000,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_default() {
+        let config = SqliteConfig::default();
+        assert_eq!(config.url, "sqlite::memory:");
+        assert_eq!(config.max_connections, 1);
+        assert_eq!(config.min_connections, 0);
+        assert_eq!(config.connection_timeout_ms, 5000);
+    }
+    #[test]
+    fn test_builder() {
+        let config = SqliteConfigBuilder::new()
+            .url("sqlite::memory:".to_string())
+            .max_connections(1)
+            .min_connections(0)
+            .connection_timeout_ms(5000)
+            .build();
+        assert_eq!(config.url, "sqlite::memory:");
+        assert_eq!(config.max_connections, 1);
+        assert_eq!(config.min_connections, 0);
+        assert_eq!(config.connection_timeout_ms, 5000);
     }
 }
