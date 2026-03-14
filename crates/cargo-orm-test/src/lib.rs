@@ -9,6 +9,7 @@ mod tests {
 
     #[derive(Model)]
     #[Table(name = "users")]
+    #[allow(unused)]
     struct User {
         #[Column(name = "id")]
         #[PrimaryKey]

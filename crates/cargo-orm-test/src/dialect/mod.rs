@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use cargo_orm_macros::Model;
+    #[allow(clippy::disallowed_types)]
     use sqlx::SqlitePool;
 
     #[derive(Model)]
@@ -11,6 +12,7 @@ mod tests {
         #[allow(unused)]
         id: i32,
         #[Column(name = "name", unique, nullable)]
+        #[allow(unused)]
         name: String,
     }
 
@@ -39,6 +41,7 @@ mod tests {
         let schema = User::get_schema();
         let ddl = dialect.generate_full_ddl(&schema).unwrap();
 
+        #[allow(clippy::disallowed_types)]
         let pool = SqlitePool::connect(":memory:").await.unwrap();
         sqlx::query(&ddl).execute(&pool).await.unwrap();
         sqlx::query("INSERT INTO users (id, name) VALUES (1, 'test')")

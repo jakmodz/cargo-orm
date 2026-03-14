@@ -5,6 +5,7 @@ mod tests {
         schema::table::TableSchema,
     };
     use cargo_orm_macros::Model;
+    #[allow(clippy::disallowed_types)]
     use sqlx::{FromRow, SqlitePool};
 
     #[derive(Model)]
@@ -20,7 +21,7 @@ mod tests {
     #[tokio::test]
     async fn test_from_row_impl() {
         let dialect = SqliteDialect;
-
+        #[allow(clippy::disallowed_types)]
         let pool = SqlitePool::connect(":memory:").await.unwrap();
         let ddl = dialect.generate_ddl(&User::get_schema()).unwrap();
 
