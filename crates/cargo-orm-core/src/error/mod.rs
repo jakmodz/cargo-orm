@@ -1,2 +1,2 @@
-pub mod error;
-pub use error::CargoOrmError;
+pub mod cargo_orm_error;
+pub use cargo_orm_error::CargoOrmError;

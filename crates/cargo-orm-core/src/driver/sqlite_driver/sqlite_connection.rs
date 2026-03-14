@@ -1,3 +1,4 @@
+#[allow(clippy::disallowed_types)]
 use sqlx::{Connection, Executor};
 
 use crate::{driver::error::DriverError, error::CargoOrmError};

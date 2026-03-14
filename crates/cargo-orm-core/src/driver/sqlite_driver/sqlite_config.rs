@@ -11,13 +11,18 @@ pub struct SqliteConfig {
     /// Connection timeout in milliseconds.
     pub connection_timeout_ms: u64,
 }
+
 pub struct SqliteConfigBuilder {
     url: String,
     max_connections: usize,
     min_connections: usize,
     connection_timeout_ms: u64,
 }
-
+impl Default for SqliteConfigBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl SqliteConfigBuilder {
     pub fn new() -> Self {
         Self {

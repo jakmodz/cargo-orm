@@ -13,7 +13,7 @@ pub use driver::sqlite_driver::{
     sqlite_config::{SqliteConfig, SqliteConfigBuilder},
     sqlite_connection::CargoSqliteConnection,
     sqlite_connection_pool::CargoSqlitePool,
-    sqlite_driver::SqliteDriver,
+    sqlite_driver_impl::SqliteDriver,
 };
 pub use model::repository::Repository;
 
