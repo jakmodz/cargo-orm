@@ -1,0 +1,5 @@
+---
+source: crates/cargo-orm-test/src/query/insert_tests.rs
+expression: ctx.sql
+---
+INSERT INTO users (name, age) VALUES(?, ?)

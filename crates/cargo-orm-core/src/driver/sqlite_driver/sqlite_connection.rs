@@ -1,29 +1,40 @@
 #[allow(clippy::disallowed_types)]
-use sqlx::{Connection, Executor};
+use sqlx::Connection;
 
-use crate::{driver::error::DriverError, error::CargoOrmError};
+use crate::{
+    dialect::{sql_dialect::SqlDialect, sqlite_dialect::sqlite::SqliteDialect},
+    driver::error::DriverError,
+    error::CargoOrmError,
+    query::query_type::{QueryContext, Value},
+};
 pub struct CargoSqliteConnection {
     pub(crate) inner: sqlx::pool::PoolConnection<sqlx::Sqlite>,
 }
 
-impl crate::driver::connection::Connection for CargoSqliteConnection {
+impl crate::driver::connection::Conn for CargoSqliteConnection {
     async fn ping_conn(&mut self) -> Result<(), CargoOrmError> {
         self.inner.ping().await.map_err(DriverError::Sqlx)?;
         Ok(())
     }
 
-    async fn execute_query(&mut self, query: &str) -> Result<u64, crate::error::CargoOrmError> {
-        let count = self
-            .inner
-            .execute(query)
+    async fn execute_query(&mut self, ctx: &mut QueryContext) -> Result<u64, CargoOrmError> {
+        let mut query = sqlx::query(&ctx.sql);
+
+        for value in ctx.values.iter() {
+            query = match value {
+                Value::String(s) => query.bind(s),
+                Value::Int(i) => query.bind(i),
+                Value::Int64(i) => query.bind(i),
+                Value::Bool(b) => query.bind(b),
+            }
+        }
+        log::info!("Executing SQL: {}", ctx.sql);
+        let result = query
+            .execute(self.inner.as_mut())
             .await
             .map_err(DriverError::Sqlx)?
             .rows_affected();
-        Ok(count)
-    }
-
-    async fn is_valid(&mut self) -> bool {
-        self.inner.ping().await.is_ok()
+        Ok(result)
     }
 
     async fn begin_transaction(&mut self) -> Result<(), CargoOrmError> {
@@ -48,5 +59,13 @@ impl crate::driver::connection::Connection for CargoSqliteConnection {
             .await
             .map_err(DriverError::Sqlx)?;
         Ok(())
+    }
+
+    async fn is_valid(&mut self) -> bool {
+        self.inner.ping().await.is_ok()
+    }
+
+    fn get_dialect(&self) -> &dyn SqlDialect {
+        &SqliteDialect
     }
 }

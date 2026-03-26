@@ -1,11 +1,11 @@
-use crate::{driver::executor::Executor, error::CargoOrmError};
+use crate::{driver::executor::Executor, error::CargoOrmError, schema::table::TableSchema};
 
 #[trait_variant::make(Repo: Send)]
-pub trait Repository<Db: Executor>: Sized + Sync {
+pub trait Repository<Db: Executor>: Sized + Sync + TableSchema {
     type PrimaryKey;
 
-    async fn save(&self, db: &Db) -> Result<Self, CargoOrmError>;
-    async fn get_all(db: &Db) -> Result<Vec<Self>, CargoOrmError>;
-    async fn get_by_id(id: Self::PrimaryKey, db: &Db) -> Result<Self, CargoOrmError>;
-    async fn delete_by_id(id: Self::PrimaryKey, db: &Db) -> Result<(), CargoOrmError>;
+    async fn save(&self, db: &mut Db) -> Result<Self, CargoOrmError>;
+    async fn get_all(db: &mut Db) -> Result<Vec<Self>, CargoOrmError>;
+    async fn get_by_id(id: Self::PrimaryKey, db: &mut Db) -> Result<Self, CargoOrmError>;
+    async fn delete_by_id(id: Self::PrimaryKey, db: &mut Db) -> Result<(), CargoOrmError>;
 }

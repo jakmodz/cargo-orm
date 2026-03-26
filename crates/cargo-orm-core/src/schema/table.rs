@@ -77,7 +77,7 @@ pub struct PrimaryKeyModel {
     pub ty: SqlType,
 }
 impl TableSchemaModel {
-    pub fn validate(&self) -> Result<(), SchemaValidationError> {
+    pub(crate) fn validate(&self) -> Result<(), SchemaValidationError> {
         if self.name.is_empty() {
             return Err(SchemaValidationError::EmptyTableName);
         }
@@ -127,6 +127,17 @@ impl TableSchemaModel {
             }
         }
         Ok(())
+    }
+    pub(crate) fn get_column_names(&self) -> Vec<&str> {
+        let mut names = Vec::with_capacity(1 + self.fields.len());
+        names.push(self.primary_key.name.as_str());
+        for field in &self.fields {
+            names.push(field.name.as_str());
+        }
+        names
+    }
+    pub fn get_columns_len(&self) -> usize {
+        1 + self.fields.len()
     }
 }
 
