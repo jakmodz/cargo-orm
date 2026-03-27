@@ -1,7 +1,7 @@
-use crate::{driver::executor::Executor, error::CargoOrmError, schema::table::TableSchema};
+use crate::{driver::executor::Executor, error::CargoOrmError};
 
 #[trait_variant::make(Repo: Send)]
-pub trait Repository<Db: Executor>: Sized + Sync + TableSchema {
+pub trait Repository<Db: Executor>: Sized + Sync {
     type PrimaryKey;
 
     async fn save(&self, db: &mut Db) -> Result<Self, CargoOrmError>;
