@@ -27,5 +27,12 @@ pub mod prelude {
     pub use crate::driver::transaction::Transaction;
     pub use crate::model::repository::Repo;
     pub use crate::query::*;
+    pub use crate::query::{
+        insert::Insert,
+        query_type::{QueryContext, Value},
+        select::Select,
+        to_sql::ToSql,
+        update::Update,
+    };
     pub use crate::schema::table::{TableSchema, TableSchemaModel};
 }

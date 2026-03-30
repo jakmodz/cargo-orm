@@ -41,6 +41,11 @@ impl<'query> Update<'query> {
         self
     }
 }
+impl<'query> Default for Update<'query> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<'query> ToSql for Update<'query> {
     fn to_sql(&self, ctx: &mut QueryContext, dialect: &dyn SqlDialect) {
         ctx.sql

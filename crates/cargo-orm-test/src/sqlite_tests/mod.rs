@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use cargo_orm_core::prelude::*;
+    use cargo_orm_core::query::query_type::QueryContext;
     use cargo_orm_core::{CargoOrmError, SqliteConfig, SqliteConfigBuilder, SqliteDriver};
 
     fn get_conf() -> SqliteConfig {
@@ -28,7 +29,9 @@ mod tests {
     async fn test_transaction() -> Result<(), CargoOrmError> {
         let config = get_conf();
         let driver = SqliteDriver::new(config).await?;
-        let tx = driver.transaction().await?;
+        let mut tx = driver.transaction().await?;
+        tx.execute_query(&mut QueryContext::from("SELECT 1"))
+            .await?;
         tx.commit().await?;
         Ok(())
     }
@@ -51,6 +54,15 @@ mod tests {
         let _conn = driver.acquire_conn().await?;
         let active = pool.active_conn();
         assert_eq!(active, 1);
+        Ok(())
+    }
+    #[tokio::test]
+    async fn test_conn() -> Result<(), CargoOrmError> {
+        let config = get_conf();
+        let driver = SqliteDriver::new(config).await?;
+        let mut conn = driver.acquire_conn().await?;
+        conn.execute_query(&mut QueryContext::from("SELECT 1"))
+            .await?;
         Ok(())
     }
 }

@@ -1,8 +1,6 @@
-use cargo_orm_core::{
-    SqliteConfigBuilder, SqliteDriver, dialect::sql_dialect::SqlDialect,
-    query::query_type::QueryContext,
-};
+use cargo_orm_core::{SqliteConfigBuilder, SqliteDriver, dialect::sql_dialect::SqlDialect};
 use cargo_orm_macros::Model;
+#[allow(dead_code)]
 pub(crate) struct MockSqliteDialect;
 impl SqlDialect for MockSqliteDialect {
     fn cast_type(&self, _: &cargo_orm_core::types::column_type::SqlType) -> String {
@@ -24,6 +22,16 @@ pub struct User {
     #[allow(unused)]
     pub name: String,
 }
+impl User {
+    #[allow(dead_code)]
+    pub(crate) fn example() -> Self {
+        Self {
+            id: 1,
+            name: String::from("Bob"),
+        }
+    }
+}
+#[allow(dead_code)]
 pub(crate) async fn init_sqlite() -> SqliteDriver {
     use cargo_orm_core::SqliteDriver;
     use cargo_orm_core::prelude::*;

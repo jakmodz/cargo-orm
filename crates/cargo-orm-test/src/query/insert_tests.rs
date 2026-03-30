@@ -1,14 +1,16 @@
 #[cfg(test)]
 mod tests {
-    use cargo_orm_core::dialect::sqlite_dialect::sqlite::SqliteDialect;
+    use cargo_orm_core::prelude::TableSchema;
     use cargo_orm_core::query::insert::Insert;
     use cargo_orm_core::query::query_type::{QueryContext, Value};
     use cargo_orm_core::query::to_sql::ToSql;
     use std::borrow::Cow;
 
+    use crate::{MockSqliteDialect, User};
+
     fn render_insert(insert: Insert) -> (String, Vec<Value>) {
         let mut ctx = QueryContext::new();
-        insert.to_sql(&mut ctx, &SqliteDialect);
+        insert.to_sql(&mut ctx, &MockSqliteDialect);
         (ctx.sql, ctx.values)
     }
 
@@ -158,5 +160,14 @@ mod tests {
         let (sql, values) = render_insert(insert);
         insta::assert_snapshot!(sql, @"INSERT INTO users (username, email, age, verified) VALUES(?, ?, ?, ?)");
         assert_eq!(values.len(), 4);
+    }
+    #[test]
+    fn test_from_schema() {
+        let schema = User::get_schema();
+        let user = User::example();
+        let insert =
+            Insert::from(&schema).values(vec![Value::Int(user.id), Value::String(user.name)]);
+        let (sql, _) = render_insert(insert);
+        insta::assert_snapshot!(sql, @"INSERT INTO users (id, name) VALUES(?, ?)");
     }
 }

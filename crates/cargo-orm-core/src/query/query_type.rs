@@ -78,3 +78,22 @@ impl Default for QueryContext {
         Self::new()
     }
 }
+
+impl From<String> for QueryContext {
+    fn from(sql: String) -> Self {
+        Self {
+            sql,
+            values: Vec::new(),
+            placeholder_count: 0,
+        }
+    }
+}
+impl From<&str> for QueryContext {
+    fn from(sql: &str) -> Self {
+        Self {
+            sql: sql.to_string(),
+            values: Vec::new(),
+            placeholder_count: 0,
+        }
+    }
+}
