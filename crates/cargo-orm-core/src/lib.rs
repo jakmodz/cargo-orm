@@ -28,6 +28,7 @@ pub mod prelude {
     pub use crate::model::repository::Repo;
     pub use crate::query::*;
     pub use crate::query::{
+        delete::Delete,
         insert::Insert,
         query_type::{QueryContext, Value},
         select::Select,
