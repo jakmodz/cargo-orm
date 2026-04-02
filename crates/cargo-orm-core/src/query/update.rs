@@ -22,7 +22,6 @@ use std::borrow::Cow;
 ///     .columns(vec!["name"])
 ///     .values(vec!["Jane"]);
 /// ```
-
 pub struct Update<'query> {
     table: Cow<'query, str>,
     columns: Vec<Cow<'query, str>>,

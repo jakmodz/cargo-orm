@@ -14,7 +14,6 @@ use std::borrow::Cow;
 /// use cargo_orm_core::query::delete::Delete;
 /// let query = Delete::new("users");
 /// ```
-
 pub struct Delete<'query> {
     table: Cow<'query, str>,
     where_clause: Option<WhereClause<'query>>,

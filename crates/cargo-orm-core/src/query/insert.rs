@@ -20,7 +20,6 @@ use crate::{
 ///     .columns(vec!["name", "email"])
 ///     .values(vec!["John", "john@example.com"]);
 /// ```
-
 pub struct Insert<'query> {
     table: Cow<'query, str>,
     columns: Vec<Cow<'query, str>>,
