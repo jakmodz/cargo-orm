@@ -1,9 +1,11 @@
 use crate::{
+    dialect::sql_dialect::SqlDialect,
     driver::{
         connection::Connection, connection_pool::ConnectionPool, error::DriverError,
         executor::Executor,
     },
     error::CargoOrmError,
+    query::query_type::QueryContext,
 };
 
 pub struct Transaction<P: ConnectionPool> {
@@ -45,10 +47,17 @@ impl<P: ConnectionPool> Drop for Transaction<P> {
 }
 
 impl<P: ConnectionPool> Executor for Transaction<P> {
-    async fn execute_query(&mut self, sql: &str) -> Result<u64, CargoOrmError> {
+    async fn execute_query(&mut self, ctx: &mut QueryContext) -> Result<u64, CargoOrmError> {
         match self.conn.as_mut() {
-            Some(conn) => conn.execute_query(sql).await,
+            Some(conn) => conn.execute_query(ctx).await,
             None => Err(CargoOrmError::DriverError(DriverError::ConnectionClosed)),
         }
+    }
+
+    fn get_dialect(&self) -> &dyn SqlDialect {
+        self.conn
+            .as_ref()
+            .expect("Transaction connection closed")
+            .get_dialect()
     }
 }

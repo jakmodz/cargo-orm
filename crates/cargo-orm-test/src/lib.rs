@@ -1,13 +1,17 @@
 pub mod dialect;
 pub mod from_row_impl;
+mod query;
+mod repository_test;
 mod sqlite_tests;
+pub mod test_entities;
 
+pub use test_entities::*;
 #[cfg(test)]
 mod tests {
     use cargo_orm_core::{schema::table::TableSchema, types::column_type::SqlType};
     use cargo_orm_macros::Model;
 
-    #[derive(Model)]
+    #[derive(Model, Clone)]
     #[Table(name = "users")]
     #[allow(unused)]
     struct User {

@@ -1,20 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use cargo_orm_macros::Model;
+    use crate::User;
     #[allow(clippy::disallowed_types)]
     use sqlx::SqlitePool;
-
-    #[derive(Model)]
-    #[Table(name = "users")]
-    struct User {
-        #[Column(name = "id")]
-        #[PrimaryKey]
-        #[allow(unused)]
-        id: i32,
-        #[Column(name = "name", unique, nullable)]
-        #[allow(unused)]
-        name: String,
-    }
 
     #[test]
     fn test_generate_ddl_sqlite() -> Result<(), cargo_orm_core::schema::table::SchemaValidationError>

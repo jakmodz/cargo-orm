@@ -1,23 +1,12 @@
 #[cfg(test)]
 mod tests {
+    use crate::User;
     use cargo_orm_core::{
         dialect::{sql_dialect::SqlDialect, sqlite_dialect::sqlite::SqliteDialect},
         schema::table::TableSchema,
     };
-    use cargo_orm_macros::Model;
     #[allow(clippy::disallowed_types)]
     use sqlx::{FromRow, SqlitePool};
-
-    #[derive(Model)]
-    #[Table(name = "users")]
-    struct User {
-        #[Column(name = "id")]
-        #[PrimaryKey]
-        #[allow(unused)]
-        id: i32,
-        #[Column(name = "name", unique, nullable)]
-        name: String,
-    }
     #[tokio::test]
     async fn test_from_row_impl() {
         let dialect = SqliteDialect;

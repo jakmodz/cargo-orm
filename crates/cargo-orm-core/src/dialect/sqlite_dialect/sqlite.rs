@@ -14,9 +14,13 @@ impl SqlDialect for SqliteDialect {
             SqlType::Boolean => "INTEGER",
             SqlType::Date => "TEXT",
             SqlType::Timestamp => "TEXT",
-            SqlType::Custom(_) => unreachable!(), //TODO,
+            SqlType::Custom(_) => unreachable!(),
         }
         .to_string()
+    }
+
+    fn bind_param(&self, _count: &usize) -> String {
+        "?".to_string()
     }
 }
 

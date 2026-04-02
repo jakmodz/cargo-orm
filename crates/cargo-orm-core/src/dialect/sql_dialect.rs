@@ -11,7 +11,7 @@ static TAB: &str = "    ";
 /// Trait representing a SQL dialect.
 /// Implement `cast_type` to support a new database engine; all DDL methods have
 /// working defaults built on top of it.
-pub trait SqlDialect {
+pub trait SqlDialect: Send + Sync {
     /// Maps an [`SqlType`] to its database-specific type name.
     fn cast_type(&self, sql_type: &SqlType) -> String;
 
@@ -111,4 +111,6 @@ pub trait SqlDialect {
         }
         Ok(ddl)
     }
+
+    fn bind_param(&self, count: &usize) -> String;
 }

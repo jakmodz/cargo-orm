@@ -15,7 +15,7 @@ use syn::{DeriveInput, parse_macro_input};
 ///
 /// ### Placed at top of struct
 ///
-/// '#[Table]'
+/// `#[Table]`
 /// possible attributes=> name: String
 ///
 /// ### Example
@@ -27,7 +27,7 @@ use syn::{DeriveInput, parse_macro_input};
 ///
 /// ### Placed above field of the struct
 ///
-/// '#[Column]'
+/// `#[Column]`
 ///  possible attributes=> name: String,unique: bool,nullable: bool
 ///
 /// # Example
@@ -39,7 +39,7 @@ use syn::{DeriveInput, parse_macro_input};
 ///}
 /// ```
 ///
-/// '#[PrimaryKey]'
+/// `#[PrimaryKey]`
 /// possible attributes=> generation_strategy: GenerationStrategy
 /// # Example
 /// ```ignore
