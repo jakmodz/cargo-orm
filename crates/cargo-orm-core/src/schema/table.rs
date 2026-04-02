@@ -77,6 +77,28 @@ pub struct PrimaryKeyModel {
     pub ty: SqlType,
 }
 impl TableSchemaModel {
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            fields: Vec::new(),
+            indexes: Vec::new(),
+            primary_key: PrimaryKeyModel {
+                name: String::new(),
+                generation_type: None,
+                ty: SqlType::Integer,
+            },
+        }
+    }
+
+    pub fn column(&mut self, name: String) -> &mut Self {
+        self.fields.push(ColumnSchemaModel {
+            name,
+            is_nullable: false,
+            is_unique: false,
+            sql_type: SqlType::Integer,
+        });
+        self
+    }
     pub(crate) fn validate(&self) -> Result<(), SchemaValidationError> {
         if self.name.is_empty() {
             return Err(SchemaValidationError::EmptyTableName);

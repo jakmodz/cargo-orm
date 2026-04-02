@@ -1,6 +1,7 @@
 use crate::dialect::sql_dialect::SqlDialect;
 use crate::schema::table::TableSchemaModel;
 
+/// Enum representing a SQL value of various types.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Value {
     String(String),
@@ -46,7 +47,7 @@ where
         }
     }
 }
-
+/// Struct representing a query context, holding the SQL string and bind parameters.
 pub struct QueryContext {
     pub sql: String,
     pub values: Vec<Value>,
@@ -54,6 +55,7 @@ pub struct QueryContext {
 }
 
 impl QueryContext {
+    /// Creates a new `QueryContext` with an empty SQL string and no bind parameters.
     pub fn new() -> Self {
         Self {
             sql: String::new(),
@@ -61,12 +63,35 @@ impl QueryContext {
             placeholder_count: 0,
         }
     }
+    /// Pushes a bind parameter to the query context, updating the SQL string and values vector.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The value to bind.
+    /// * `dialect` - The SQL dialect to use for binding.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use cargo_orm_core::query::query_type::QueryContext;
+    /// use cargo_orm_core::dialect::sqlite_dialect::SqliteDialect;
+    /// use cargo_orm_core::query::query_type::Value;
+    ///
+    /// let mut ctx = QueryContext::new();
+    /// ctx.push_bind_param(Value::String("foo".to_string()), &SqliteDialect);
+    /// ```
     pub fn push_bind_param(&mut self, value: Value, dialect: &dyn SqlDialect) {
         self.placeholder_count += 1;
         self.sql
             .push_str(&dialect.bind_param(&self.placeholder_count));
         self.values.push(value);
     }
+    /// Creates a new `QueryContext` from a `TableSchemaModel` using the given SQL dialect.
+    ///
+    /// # Arguments
+    ///
+    /// * `model` - The table schema model to generate the DDL from.
+    /// * `dialect` - The SQL dialect to use for generating the DDL.
     pub fn from_model(model: TableSchemaModel, dialect: &dyn SqlDialect) -> Self {
         let mut ctx = Self::new();
         ctx.sql = dialect.generate_ddl(&model).unwrap();

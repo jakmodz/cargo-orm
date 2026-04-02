@@ -7,6 +7,26 @@ use crate::{
 use super::where_clause::WhereClause;
 
 #[derive(Debug, Clone)]
+/// SELECT query builder.
+///
+/// Builds SELECT queries with optional WHERE clauses and LIMIT.
+///
+/// # Examples
+///
+/// Select all columns:
+/// ```
+/// use cargo_orm_core::query::select::Select;
+/// let query = Select::new("users");
+/// ```
+///
+/// Select specific columns with limit:
+/// ```
+/// use cargo_orm_core::query::select::Select;
+/// let query = Select::new("users")
+///     .add_column("id")
+///     .add_column("name")
+///     .limit(10);
+/// ```
 pub struct Select<'query> {
     table: Cow<'query, str>,
     columns: Vec<Cow<'query, str>>,
@@ -25,6 +45,10 @@ impl<'col> Select<'col> {
     }
     pub fn add_column<C: Into<Cow<'col, str>>>(mut self, column: C) -> Self {
         self.columns.push(column.into());
+        self
+    }
+    pub fn columns<S: Into<Cow<'col, str>>>(mut self, columns: Vec<S>) -> Self {
+        self.columns = columns.into_iter().map(|c| c.into()).collect();
         self
     }
     pub fn limit(mut self, limit: usize) -> Self {

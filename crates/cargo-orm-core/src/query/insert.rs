@@ -7,6 +7,20 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+/// INSERT query builder.
+///
+/// Builds INSERT statements with automatic parameter binding.
+/// Columns and values must be paired in order.
+///
+/// # Examples
+///
+/// ```
+/// use cargo_orm_core::query::insert::Insert;
+/// let query = Insert::new("users")
+///     .columns(vec!["name", "email"])
+///     .values(vec!["John", "john@example.com"]);
+/// ```
+
 pub struct Insert<'query> {
     table: Cow<'query, str>,
     columns: Vec<Cow<'query, str>>,
@@ -20,12 +34,12 @@ impl<'query> Insert<'query> {
             values: Vec::new(),
         }
     }
-    pub fn columns(mut self, columns: Vec<Cow<'query, str>>) -> Self {
-        self.columns = columns;
+    pub fn columns<S: Into<Cow<'query, str>>>(mut self, columns: Vec<S>) -> Self {
+        self.columns = columns.into_iter().map(|c| c.into()).collect();
         self
     }
-    pub fn values(mut self, values: Vec<Value>) -> Self {
-        self.values = values;
+    pub fn values<V: Into<Value>>(mut self, values: Vec<V>) -> Self {
+        self.values = values.into_iter().map(|v| v.into()).collect();
         self
     }
 }

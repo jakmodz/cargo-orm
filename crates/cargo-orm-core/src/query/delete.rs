@@ -4,6 +4,16 @@ use crate::{
     query::{query_type::QueryContext, to_sql::ToSql, where_clause::WhereClause},
 };
 use std::borrow::Cow;
+/// DELETE query builder.
+///
+/// Builds DELETE statements. WHERE clause is strongly recommended.
+///
+/// # Examples
+///
+/// ```
+/// use cargo_orm_core::query::delete::Delete;
+/// let query = Delete::new("users");
+/// ```
 
 pub struct Delete<'query> {
     table: Cow<'query, str>,

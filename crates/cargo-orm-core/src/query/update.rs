@@ -8,6 +8,20 @@ use crate::{
     },
 };
 use std::borrow::Cow;
+/// UPDATE query builder.
+///
+/// Builds UPDATE statements with automatic parameter binding.
+/// WHERE clause is recommended to prevent unintended updates.
+///
+/// # Examples
+///
+/// ```
+/// use cargo_orm_core::query::update::Update;
+/// let query = Update::new()
+///     .table("users")
+///     .columns(vec!["name"])
+///     .values(vec!["Jane"]);
+/// ```
 
 pub struct Update<'query> {
     table: Cow<'query, str>,
@@ -32,12 +46,12 @@ impl<'query> Update<'query> {
         self.where_clause = Some(where_clause);
         self
     }
-    pub fn columns(mut self, columns: Vec<Cow<'query, str>>) -> Self {
-        self.columns = columns;
+    pub fn columns<S: Into<Cow<'query, str>>>(mut self, columns: Vec<S>) -> Self {
+        self.columns = columns.into_iter().map(|c| c.into()).collect();
         self
     }
-    pub fn values(mut self, values: Vec<Value>) -> Self {
-        self.values = values;
+    pub fn values<V: Into<Value>>(mut self, values: Vec<V>) -> Self {
+        self.values = values.into_iter().map(|v| v.into()).collect();
         self
     }
 }

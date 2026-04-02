@@ -124,9 +124,8 @@ mod tests {
 
     #[test]
     fn test_insert_no_values() {
-        let insert = Insert::new("users")
-            .columns(vec![Cow::Borrowed("name")])
-            .values(vec![]);
+        let insert = Insert::new("users").columns(vec![Cow::Borrowed("name")]);
+
         let (sql, values) = render_insert(insert);
         insta::assert_snapshot!(sql, @"INSERT INTO users (name) VALUES()");
         assert_eq!(values.len(), 0);
