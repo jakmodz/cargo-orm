@@ -35,7 +35,11 @@ impl User {
 pub(crate) async fn init_sqlite() -> SqliteDriver {
     use corrosion_orm_core::SqliteDriver;
     use corrosion_orm_core::prelude::*;
-    let _ = env_logger::builder().is_test(true).try_init();
+
+    let _ = env_logger::builder()
+        .is_test(true)
+        .filter_level(log::LevelFilter::Info)
+        .try_init();
 
     let config = SqliteConfigBuilder::new()
         .url(String::from(":memory:"))
