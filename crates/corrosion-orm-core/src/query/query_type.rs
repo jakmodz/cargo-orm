@@ -66,9 +66,9 @@ impl QueryContext {
     #[cfg(feature = "log")]
     pub fn to_debug_sql(&self, dialect: &dyn SqlDialect) -> String {
         let mut sql = self.sql.clone();
-        for (idx, value) in self.values.iter().enumerate().rev() {
-            let placeholder = dialect.bind_param(&(idx + 1));
-
+        for idx in (1..=self.values.len()).rev() {
+            let value = &self.values[idx - 1];
+            let placeholder = dialect.bind_param(&idx);
             if let Some(pos) = sql.rfind(&placeholder) {
                 let value_str = match value {
                     Value::String(s) => format!("'{}'", s.replace('\'', "''")),
