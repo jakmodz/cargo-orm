@@ -23,7 +23,7 @@ mod tests {
         assert!(result.is_ok());
     }
     #[tokio::test]
-    async fn test_save_update() -> Result<(), CorrosionOrmError> {
+    async fn test_save_update() {
         let user = User::example();
         let driver = init_sqlite().await;
         let mut conn = driver.acquire_conn().await.unwrap();
@@ -33,12 +33,11 @@ mod tests {
         let mut updated_user = User::example();
         updated_user.name = String::from("Alice");
         updated_user.save(&mut conn).await.unwrap();
-        let result = User::get_by_id(1, &mut conn).await?.unwrap();
-        assert_eq!(result.name, "Alice");
-        Ok(())
+        let result = User::get_by_id(1, &mut conn).await.unwrap();
+        assert_eq!(result.name, "Alice")
     }
     #[tokio::test]
-    async fn test_save_with_transaction_commit() -> Result<(), CorrosionOrmError> {
+    async fn test_save_with_transaction_commit() {
         let user = User::example();
         let driver = init_sqlite().await;
 
@@ -47,13 +46,13 @@ mod tests {
         tx.commit().await.unwrap();
 
         let mut conn = driver.acquire_conn().await.unwrap();
-        let result = User::get_by_id(1, &mut conn).await?.unwrap();
-        assert_eq!(result.id, 1);
-        Ok(())
+        let result = User::get_by_id(1, &mut conn).await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().id, 1);
     }
 
     #[tokio::test]
-    async fn test_save_with_transaction_rollback() -> Result<(), CorrosionOrmError> {
+    async fn test_save_with_transaction_rollback() {
         let user = User::example();
         let driver = init_sqlite().await;
 
@@ -62,13 +61,12 @@ mod tests {
         tx.rollback().await.unwrap();
 
         let mut conn = driver.acquire_conn().await.unwrap();
-        let result = User::get_by_id(1, &mut conn).await?;
-        assert!(result.is_none());
-        Ok(())
+        let result = User::get_by_id(1, &mut conn).await;
+        assert!(result.is_err());
     }
 
     #[tokio::test]
-    async fn test_save_update_with_transaction_commit() -> Result<(), CorrosionOrmError> {
+    async fn test_save_update_with_transaction_commit() {
         let user = User::example();
         let driver = init_sqlite().await;
 
@@ -77,19 +75,18 @@ mod tests {
         drop(conn);
 
         let mut tx = driver.transaction().await.unwrap();
-        let mut updated_user = User::get_by_id(1, &mut tx).await?.unwrap();
+        let mut updated_user = User::get_by_id(1, &mut tx).await.unwrap();
         updated_user.name = String::from("Alice");
         updated_user.save(&mut tx).await.unwrap();
         tx.commit().await.unwrap();
 
         let mut conn = driver.acquire_conn().await.unwrap();
-        let result = User::get_by_id(1, &mut conn).await?.unwrap();
+        let result = User::get_by_id(1, &mut conn).await.unwrap();
         assert_eq!(result.name, "Alice");
-        Ok(())
     }
 
     #[tokio::test]
-    async fn test_save_multiple_with_transaction_commit() -> Result<(), CorrosionOrmError> {
+    async fn test_save_multiple_with_transaction_commit() {
         let driver = init_sqlite().await;
 
         let mut tx = driver.transaction().await.unwrap();
@@ -122,9 +119,8 @@ mod tests {
         assert!(result1.is_ok());
         assert!(result2.is_ok());
         assert!(result3.is_ok());
-        assert_eq!(result1?.unwrap().name, "Alice");
-        assert_eq!(result2?.unwrap().name, "Bob");
-        assert_eq!(result3?.unwrap().name, "Charlie");
-        Ok(())
+        assert_eq!(result1.unwrap().name, "Alice");
+        assert_eq!(result2.unwrap().name, "Bob");
+        assert_eq!(result3.unwrap().name, "Charlie");
     }
 }
