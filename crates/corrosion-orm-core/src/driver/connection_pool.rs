@@ -34,11 +34,11 @@ impl<P: ConnectionPool> DerefMut for ConnectionGuard<P> {
 impl<P: ConnectionPool> Executor for ConnectionGuard<P> {
     async fn execute_query(&mut self, ctx: &mut QueryContext) -> Result<u64, CorrosionOrmError> {
         #[cfg(feature = "log")]
-        log::info!(
-            "Executing SQL: {}",
-            ctx.to_debug_sql(self.conn.get_dialect())
-        );
+        let sql = ctx.to_debug_sql(self.conn.get_dialect());
+        #[cfg(feature = "log")]
+        log::info!("Executing SQL: {}", sql);
         let result = self.conn.execute_query(ctx).await;
+
         match &result {
             Ok(_value) => {
                 #[cfg(feature = "log")]
@@ -46,10 +46,7 @@ impl<P: ConnectionPool> Executor for ConnectionGuard<P> {
             }
             Err(_err) => {
                 #[cfg(feature = "log")]
-                log::warn!(
-                    "Failed to execute SQL: {}",
-                    ctx.to_debug_sql(self.conn.get_dialect())
-                );
+                log::warn!("Failed to execute SQL: {}. Error: {:?}", sql, _err);
             }
         }
         result
@@ -69,17 +66,16 @@ impl<P: ConnectionPool> Executor for ConnectionGuard<P> {
             ctx.to_debug_sql(self.conn.get_dialect())
         );
         let result = self.conn.fetch_one(ctx).await;
+        #[cfg(feature = "log")]
+        let sql = ctx.to_debug_sql(self.conn.get_dialect());
         match &result {
             Ok(_value) => {
                 #[cfg(feature = "log")]
-                log::info!("Fetched one: {}", ctx.to_debug_sql(self.conn.get_dialect()));
+                log::info!("Fetched one: {}", sql);
             }
             Err(_err) => {
                 #[cfg(feature = "log")]
-                log::warn!(
-                    "Failed to fetch one: {}",
-                    ctx.to_debug_sql(self.conn.get_dialect())
-                );
+                log::warn!("Failed to fetch one: {}. Error: {:?}", sql, _err);
             }
         }
         result
@@ -95,17 +91,16 @@ impl<P: ConnectionPool> Executor for ConnectionGuard<P> {
             ctx.to_debug_sql(self.conn.get_dialect())
         );
         let result = self.conn.fetch_all(ctx).await;
+        #[cfg(feature = "log")]
+        let sql = ctx.to_debug_sql(self.conn.get_dialect());
         match &result {
             Ok(_value) => {
                 #[cfg(feature = "log")]
-                log::info!("Fetched all: {}", ctx.to_debug_sql(self.conn.get_dialect()));
+                log::info!("Fetched all: {}", sql);
             }
             Err(_err) => {
                 #[cfg(feature = "log")]
-                log::warn!(
-                    "Failed to fetch all: {}",
-                    ctx.to_debug_sql(self.conn.get_dialect())
-                );
+                log::warn!("Failed to fetch all: {}. Error: {:?}", sql, _err);
             }
         }
         result
@@ -115,25 +110,18 @@ impl<P: ConnectionPool> Executor for ConnectionGuard<P> {
         ctx: &mut QueryContext,
     ) -> Result<Option<E>, CorrosionOrmError> {
         #[cfg(feature = "log")]
-        log::info!(
-            "Fetching optional: {}",
-            ctx.to_debug_sql(self.conn.get_dialect())
-        );
+        let sql = ctx.to_debug_sql(self.conn.get_dialect());
+        #[cfg(feature = "log")]
+        log::info!("Fetching optional: {}", sql);
         let result = self.conn.fetch_optional(ctx).await;
         match &result {
             Ok(_value) => {
                 #[cfg(feature = "log")]
-                log::info!(
-                    "Fetched optional: {}",
-                    ctx.to_debug_sql(self.conn.get_dialect())
-                );
+                log::info!("Fetched optional: {}", sql);
             }
             Err(_err) => {
                 #[cfg(feature = "log")]
-                log::warn!(
-                    "Failed to fetch optional: {}",
-                    ctx.to_debug_sql(self.conn.get_dialect())
-                );
+                log::warn!("Failed to fetch optional: {}. Error: {:?}", sql, _err);
             }
         }
         result
