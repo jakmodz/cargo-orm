@@ -63,6 +63,24 @@ impl QueryContext {
             placeholder_count: 0,
         }
     }
+    #[cfg(feature = "log")]
+    pub fn to_debug_sql(&self, dialect: &dyn SqlDialect) -> String {
+        let mut sql = self.sql.clone();
+        for idx in (1..=self.values.len()).rev() {
+            let value = &self.values[idx - 1];
+            let placeholder = dialect.bind_param(&idx);
+            if let Some(pos) = sql.rfind(&placeholder) {
+                let value_str = match value {
+                    Value::String(s) => format!("'{}'", s.replace('\'', "''")),
+                    Value::Int(i) => i.to_string(),
+                    Value::Int64(i) => i.to_string(),
+                    Value::Bool(b) => if *b { "1" } else { "0" }.to_string(),
+                };
+                sql.replace_range(pos..pos + placeholder.len(), &value_str);
+            }
+        }
+        sql
+    }
     /// Pushes a bind parameter to the query context, updating the SQL string and values vector.
     ///
     /// # Arguments

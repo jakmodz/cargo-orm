@@ -2,7 +2,7 @@ use sqlx::FromRow;
 
 use crate::{
     dialect::sql_dialect::SqlDialect,
-    driver::{connection::Connection, executor::Executor, transaction::Transaction},
+    driver::{connection::Conn, executor::Executor, transaction::Transaction},
     error::CorrosionOrmError,
     query::query_type::QueryContext,
 };
@@ -33,7 +33,23 @@ impl<P: ConnectionPool> DerefMut for ConnectionGuard<P> {
 }
 impl<P: ConnectionPool> Executor for ConnectionGuard<P> {
     async fn execute_query(&mut self, ctx: &mut QueryContext) -> Result<u64, CorrosionOrmError> {
-        self.conn.execute_query(ctx).await
+        #[cfg(feature = "log")]
+        let sql = ctx.to_debug_sql(self.conn.get_dialect());
+        #[cfg(feature = "log")]
+        log::info!("Executing SQL: {}", sql);
+        let result = self.conn.execute_query(ctx).await;
+
+        match &result {
+            Ok(_value) => {
+                #[cfg(feature = "log")]
+                log::info!("Executed SQL Rows affected: {}", _value);
+            }
+            Err(_err) => {
+                #[cfg(feature = "log")]
+                log::warn!("Failed to execute SQL: {}. Error: {:?}", sql, _err);
+            }
+        }
+        result
     }
 
     fn get_dialect(&self) -> &dyn SqlDialect {
@@ -44,20 +60,71 @@ impl<P: ConnectionPool> Executor for ConnectionGuard<P> {
         &mut self,
         ctx: &mut QueryContext,
     ) -> Result<E, CorrosionOrmError> {
-        self.conn.fetch_one(ctx).await
+        #[cfg(feature = "log")]
+        log::info!(
+            "Executing SQL: {}",
+            ctx.to_debug_sql(self.conn.get_dialect())
+        );
+        let result = self.conn.fetch_one(ctx).await;
+        #[cfg(feature = "log")]
+        let sql = ctx.to_debug_sql(self.conn.get_dialect());
+        match &result {
+            Ok(_value) => {
+                #[cfg(feature = "log")]
+                log::info!("Fetched one: {}", sql);
+            }
+            Err(_err) => {
+                #[cfg(feature = "log")]
+                log::warn!("Failed to fetch one: {}. Error: {:?}", sql, _err);
+            }
+        }
+        result
     }
 
     async fn fetch_all<E: for<'r> FromRow<'r, sqlx::sqlite::SqliteRow> + Send + Unpin>(
         &mut self,
         ctx: &mut QueryContext,
     ) -> Result<Vec<E>, CorrosionOrmError> {
-        self.conn.fetch_all(ctx).await
+        #[cfg(feature = "log")]
+        log::info!(
+            "Fetching all: {}",
+            ctx.to_debug_sql(self.conn.get_dialect())
+        );
+        let result = self.conn.fetch_all(ctx).await;
+        #[cfg(feature = "log")]
+        let sql = ctx.to_debug_sql(self.conn.get_dialect());
+        match &result {
+            Ok(_value) => {
+                #[cfg(feature = "log")]
+                log::info!("Fetched all: {}", sql);
+            }
+            Err(_err) => {
+                #[cfg(feature = "log")]
+                log::warn!("Failed to fetch all: {}. Error: {:?}", sql, _err);
+            }
+        }
+        result
     }
     async fn fetch_optional<E: for<'r> FromRow<'r, sqlx::sqlite::SqliteRow> + Send + Unpin>(
         &mut self,
         ctx: &mut QueryContext,
     ) -> Result<Option<E>, CorrosionOrmError> {
-        self.conn.fetch_optional(ctx).await
+        #[cfg(feature = "log")]
+        let sql = ctx.to_debug_sql(self.conn.get_dialect());
+        #[cfg(feature = "log")]
+        log::info!("Fetching optional: {}", sql);
+        let result = self.conn.fetch_optional(ctx).await;
+        match &result {
+            Ok(_value) => {
+                #[cfg(feature = "log")]
+                log::info!("Fetched optional: {}", sql);
+            }
+            Err(_err) => {
+                #[cfg(feature = "log")]
+                log::warn!("Failed to fetch optional: {}. Error: {:?}", sql, _err);
+            }
+        }
+        result
     }
 }
 /// A connection pool for managing database connections.

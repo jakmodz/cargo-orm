@@ -30,7 +30,6 @@ impl crate::driver::connection::Conn for CorrosionSqliteConnection {
             }
         }
 
-        log::info!("Executing SQL: {}", ctx.sql);
         let result = query
             .execute(self.inner.as_mut())
             .await
