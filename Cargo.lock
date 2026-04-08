@@ -215,6 +215,7 @@ name = "corrosion-orm-macros"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "corrosion-orm-core",
  "deluxe",
  "proc-macro2",
