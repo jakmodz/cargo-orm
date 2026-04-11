@@ -420,6 +420,7 @@ mod tests {
         let (sql, values) = render_clause(clause.clause);
         insta::assert_snapshot!(sql, @"name = ?");
         assert_eq!(values.len(), 1);
+        assert_eq!(values[0], Value::String("John".to_string()))
     }
     #[test]
     fn test_contains_from_entity_column() {
@@ -430,15 +431,17 @@ mod tests {
 
         insta::assert_snapshot!(sql, @"name LIKE ?");
         assert_eq!(values.len(), 1);
+        assert_eq!(values[0], Value::String("%John%".to_string()));
     }
     #[test]
     fn test_starts_with_entity_column() {
         let clause: WhereClause<'_> = user::COLUMN
             .name
-            .contains(Value::String("John".to_string()));
+            .starts_with(Value::String("John".to_string()));
         let (sql, values) = render_clause(clause.clause);
         insta::assert_snapshot!(sql, @"name LIKE ?");
         assert_eq!(values.len(), 1);
+        assert_eq!(values[0], Value::String("John%".to_string()));
     }
     #[test]
     fn test_numeric_column_entity() {
@@ -446,5 +449,6 @@ mod tests {
         let (sql, values) = render_clause(clause.clause);
         insta::assert_snapshot!(sql, @"id = ?");
         assert_eq!(values.len(), 1);
+        assert_eq!(values[0], Value::Int(30));
     }
 }
