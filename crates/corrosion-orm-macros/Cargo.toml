@@ -14,3 +14,4 @@ proc-macro2 = {workspace = true}
 deluxe= {workspace= true}
 anyhow = {workspace = true}
 corrosion-orm-core = {path = "../corrosion-orm-core"}
+chrono = {workspace = true}

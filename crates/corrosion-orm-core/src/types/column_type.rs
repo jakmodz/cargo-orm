@@ -59,6 +59,11 @@ impl ToSqlType for u16 {
         SqlType::Integer
     }
 }
+impl ToSqlType for i16 {
+    fn to_sql_type(&self) -> SqlType {
+        SqlType::Integer
+    }
+}
 impl ToSqlType for u32 {
     fn to_sql_type(&self) -> SqlType {
         SqlType::Integer

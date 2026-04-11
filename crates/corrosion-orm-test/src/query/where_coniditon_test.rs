@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use crate::test_entities::MockSqliteDialect;
+
+    use crate::test_entities::*;
     use corrosion_orm_core::query::query_type::{QueryContext, Value};
     use corrosion_orm_core::query::to_sql::ToSql;
     use corrosion_orm_core::query::where_clause::{Condition, WhereClause, WhereClauseType};
-
     fn render_clause(clause: WhereClauseType) -> (String, Vec<Value>) {
         let mut ctx = QueryContext::new();
         let dialect = MockSqliteDialect;
@@ -117,7 +117,14 @@ mod tests {
         insta::assert_snapshot!(sql, @"deleted_at IS NULL");
         assert_eq!(values.len(), 0);
     }
-
+    #[test]
+    fn test_simple_between() {
+        let clause =
+            WhereClauseType::Condition(Condition::Between("age", Value::Int(18), Value::Int(30)));
+        let (sql, values) = render_clause(clause);
+        insta::assert_snapshot!(sql, @"age BETWEEN ? AND ?");
+        assert_eq!(values.len(), 2);
+    }
     #[test]
     fn test_and_two_conditions() {
         let clause = WhereClauseType::And(
@@ -405,5 +412,42 @@ mod tests {
         let dialect = MockSqliteDialect;
         clause.to_sql(&mut ctx, &dialect);
         insta::assert_snapshot!(ctx.sql, @"age = ? AND active = ?");
+    }
+    #[test]
+    fn test_simple_condition_from_entity_column() {
+        let clause: WhereClause<'_> = user::COLUMN.name.eq(Value::String("John".to_string()));
+        let (sql, values) = render_clause(clause.clause);
+        insta::assert_snapshot!(sql, @"name = ?");
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0], Value::String("John".to_string()))
+    }
+    #[test]
+    fn test_contains_from_entity_column() {
+        let clause: WhereClause<'_> = user::COLUMN
+            .name
+            .contains(Value::String("John".to_string()));
+        let (sql, values) = render_clause(clause.clause);
+
+        insta::assert_snapshot!(sql, @"name LIKE ?");
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0], Value::String("%John%".to_string()));
+    }
+    #[test]
+    fn test_starts_with_entity_column() {
+        let clause: WhereClause<'_> = user::COLUMN
+            .name
+            .starts_with(Value::String("John".to_string()));
+        let (sql, values) = render_clause(clause.clause);
+        insta::assert_snapshot!(sql, @"name LIKE ?");
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0], Value::String("John%".to_string()));
+    }
+    #[test]
+    fn test_numeric_column_entity() {
+        let clause: WhereClause<'_> = user::COLUMN.id.eq(30);
+        let (sql, values) = render_clause(clause.clause);
+        insta::assert_snapshot!(sql, @"id = ?");
+        assert_eq!(values.len(), 1);
+        assert_eq!(values[0], Value::Int(30));
     }
 }
