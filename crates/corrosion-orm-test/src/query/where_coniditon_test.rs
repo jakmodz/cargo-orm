@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod tests {
 
-    use crate::test_entities::MockSqliteDialect;
     use crate::test_entities::*;
     use corrosion_orm_core::query::query_type::{QueryContext, Value};
     use corrosion_orm_core::query::to_sql::ToSql;
