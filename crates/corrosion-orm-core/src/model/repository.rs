@@ -1,10 +1,10 @@
-use crate::{CorrosionOrmError, Executor, model::finder::Finder};
+use crate::{CorrosionOrmError, Executor, model::finder::Finder, types::ColumnTrait};
 
 #[trait_variant::make(Repo: Send)]
 pub trait Repository<Db: Executor>: Sized + Sync {
     /// The primary key type for this repository.
     type PrimaryKey;
-
+    type Column: ColumnTrait;
     /// Saves the entity to the database.
     ///
     /// Returns the saved entity with any generated fields populated.
@@ -28,5 +28,5 @@ pub trait Repository<Db: Executor>: Sized + Sync {
     /// Finds entities in the repository that match the given criteria.
     ///
     /// Returns a [`Finder`] that can be used to execute the query and retrieve the results.
-    fn find<'query>() -> Finder<'query, Self, Db>;
+    fn find<'query>() -> Finder<'query, Self, Db, Self::Column>;
 }

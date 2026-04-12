@@ -6,18 +6,24 @@
 //! - [`Update`] - UPDATE queries with WHERE conditions
 //! - [`Delete`] - DELETE queries with WHERE conditions
 //!
+//! # Type-Safe Column References
+//!
+//! To ensure that column references are valid at compile time, query builders like
+//! [`Select`], [`Update`], [`Delete`], and [`WhereClause`] require a generic type `C`
+//! that implements  [`ColumnTrait`](crate::types::ColumnTrait). This prevents runtime errors caused by typos
+//! in raw string queries and relies on generated schema column enums instead.
+//!
 //! # Builder Pattern
-//!
-//! All query builders use the fluent builder pattern for chainable construction:
+//! All query builders support implicit conversion from `&TableSchemaModel`,
+//! automatically extracting table name and columns:
 //!
 //! ```
+//! use corrosion_orm_core::schema::table::TableSchemaModel;
 //! use corrosion_orm_core::query::select::Select;
-//! let query = Select::new("users")
-//!     .add_column("id")
-//!     .add_column("name")
-//!     .limit(10);
 //! ```
-//!
+//! use corrosion_orm_core::schema::table::TableSchemaModel;
+//! use corrosion_orm_core::query::select::Select;
+//! # Converting to SQL
 //! # TableSchemaModel Conversion
 //!
 //! All query builders support implicit conversion from `&TableSchemaModel`,
@@ -26,27 +32,26 @@
 //! ```
 //! use corrosion_orm_core::schema::table::TableSchemaModel;
 //! use corrosion_orm_core::query::select::Select;
-//! let mut schema = TableSchemaModel::new("users".to_string());
-//! schema.column("id".to_string()).column("name".to_string());
-//! let query = Select::from(&schema);  // Extracts table name and columns
+//! use corrosion_orm_core::types::ColumnTrait;
+//!
+//! #[derive(Clone, Copy)]
+//! pub enum UserColumn {
+//!     Id,
+//! }
+//!
+//! impl ColumnTrait for UserColumn {
+//!     fn as_str(&self) -> &'static str {
+//!         "id"
+//!     }
+//! }
+//!
+//! // let schema = TableSchemaModel { ... };
+//! // let select = Select::<UserColumn>::from(&schema);
 //! ```
-//! use corrosion_orm_core::schema::table::TableSchemaModel;
-//! use corrosion_orm_core::query::select::Select;
-//! let mut schema = TableSchemaModel::new("users".to_string());
-//! schema.column("id".to_string()).column("name".to_string());
-//! let query = Select::from(&schema);  // Extracts table name and columns
+//!
 //! # Converting to SQL
 //!
 //! Use the [`ToSql`] trait to convert builders to SQL strings:
-//!
-//! ```
-//! use corrosion_orm_core::query::to_sql::ToSql;
-//! use corrosion_orm_core::query::query_type::QueryContext;
-//! use corrosion_orm_core::dialect::sql_dialect::SqlDialect;
-//! // let dialect = ...;
-//! // let mut ctx = QueryContext::new();
-//! // query.to_sql(&mut ctx, &dialect);
-//! ```
 
 pub mod delete;
 pub mod insert;

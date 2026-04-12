@@ -3,9 +3,17 @@ mod tests {
     use std::borrow::Cow;
 
     use crate::test_entities::*;
-    use corrosion_orm_core::{prelude::*, query::where_clause::WhereClause};
+    use corrosion_orm_core::{prelude::*, query::where_clause::WhereClause, types::ColumnTrait};
 
-    fn render_update(update: Update) -> (String, Vec<Value>) {
+    #[derive(Clone, Copy, Debug)]
+    pub struct Col(&'static str);
+    impl ColumnTrait for Col {
+        fn as_str(&self) -> &'static str {
+            self.0
+        }
+    }
+
+    fn render_update(update: Update<Col>) -> (String, Vec<Value>) {
         let mut ctx = QueryContext::new();
         update.to_sql(&mut ctx, &MockSqliteDialect);
         (ctx.sql, ctx.values)
@@ -13,7 +21,7 @@ mod tests {
 
     #[test]
     fn test_update_single_column() {
-        let update = Update::new()
+        let update: Update<Col> = Update::new()
             .table(Cow::Owned("users".to_string()))
             .columns(vec![Cow::Owned("id".to_string())])
             .values(vec![Value::Int(1)]);
@@ -22,7 +30,7 @@ mod tests {
     }
     #[test]
     fn test_update_multiple_columns() {
-        let update = Update::new()
+        let update: Update<Col> = Update::new()
             .table(Cow::Owned("users".to_string()))
             .columns(vec![
                 Cow::Owned("id".to_string()),
@@ -34,13 +42,10 @@ mod tests {
     }
     #[test]
     fn test_update_with_where() {
-        let update = Update::new()
-            .table(Cow::Owned("users".to_string()))
-            .columns(vec![Cow::Owned("id".to_string())])
-            .values(vec![Value::Int(1)])
-            .where_clause(WhereClause::eq("id", 1));
+        let schema = User::get_schema();
+        let update = Update::from(&schema).where_clause(WhereClause::eq(Col("id"), 1));
         let (sql, _values) = render_update(update);
-        insta::assert_snapshot!(sql, @"UPDATE users SET id = ? WHERE id = ?");
+        insta::assert_snapshot!(sql, @"UPDATE users SET id = ?, name = ? WHERE id = ?");
     }
     #[test]
     fn test_update_with_where_and_multiple_columns() {
@@ -51,7 +56,7 @@ mod tests {
                 Cow::Owned("name".to_string()),
             ])
             .values(vec![Value::Int(1), Value::String("John".to_string())])
-            .where_clause(WhereClause::eq("id", 1));
+            .where_clause(WhereClause::eq(Col("id"), 1));
         let (sql, _values) = render_update(update);
         insta::assert_snapshot!(sql, @"UPDATE users SET id = ?, name = ? WHERE id = ?");
     }
@@ -64,16 +69,14 @@ mod tests {
                 Cow::Owned("name".to_string()),
             ])
             .values(vec![Value::Int(1), Value::String("John".to_string())])
-            .where_clause(WhereClause::eq("id", 1));
+            .where_clause(WhereClause::eq(Col("id"), 1));
         let (sql, _values) = render_update(update);
         insta::assert_snapshot!(sql, @"UPDATE users SET id = ?, name = ? WHERE id = ?");
     }
     #[test]
     fn test_update_from_user_schema() {
         let schema = User::get_schema();
-        let update = Update::from(&schema)
-            .values(vec![Value::Int(1), Value::String("John".to_string())])
-            .where_clause(WhereClause::eq("id", 1));
+        let update = Update::from(&schema).where_clause(WhereClause::eq(Col("id"), 1));
         let (sql, _values) = render_update(update);
         insta::assert_snapshot!(sql, @"UPDATE users SET id = ?, name = ? WHERE id = ?");
     }

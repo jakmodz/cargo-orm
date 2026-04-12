@@ -7,7 +7,17 @@ mod tests {
     use corrosion_orm_core::query::to_sql::ToSql;
     use corrosion_orm_core::query::where_clause::{Condition, WhereClause, WhereClauseType};
     use corrosion_orm_core::schema::table::TableSchema;
-    fn render_select(select: Select) -> String {
+    use corrosion_orm_core::types::ColumnTrait;
+
+    #[derive(Clone, Copy, Debug)]
+    pub struct Col(&'static str);
+    impl ColumnTrait for Col {
+        fn as_str(&self) -> &'static str {
+            self.0
+        }
+    }
+
+    fn render_select(select: Select<Col>) -> String {
         let mut ctx = QueryContext::new();
         select.to_sql(&mut ctx, &SqliteDialect);
         ctx.sql
@@ -16,7 +26,7 @@ mod tests {
     fn test_select_create_from_table_schema_sqlite() {
         let mut ctx = QueryContext::new();
         let schema = User::get_schema();
-        let select = Select::from(&schema);
+        let select: Select<Col> = Select::from(&schema);
         select.to_sql(&mut ctx, &SqliteDialect);
         assert_eq!(select.get_columns().len(), 2);
         insta::assert_snapshot!(ctx.sql);
@@ -25,7 +35,7 @@ mod tests {
     fn test_select_with_simple_where() {
         let where_clause = WhereClause {
             clause: WhereClauseType::Condition(Condition::Eq(
-                "status",
+                Col("status"),
                 Value::String("active".to_string()),
             )),
         };
@@ -40,7 +50,7 @@ mod tests {
     #[test]
     fn test_select_with_where_and_limit() {
         let where_clause = WhereClause {
-            clause: WhereClauseType::Condition(Condition::Gt("age", Value::Int(18))),
+            clause: WhereClauseType::Condition(Condition::Gt(Col("age"), Value::Int(18))),
         };
         let select = Select::new("users")
             .add_column("name")
@@ -55,11 +65,11 @@ mod tests {
         let where_clause = WhereClause {
             clause: WhereClauseType::And(
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "status",
+                    Col("status"),
                     Value::String("active".to_string()),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Gt(
-                    "score",
+                    Col("score"),
                     Value::Int(50),
                 ))),
             ),
@@ -76,11 +86,11 @@ mod tests {
         let where_clause = WhereClause {
             clause: WhereClauseType::Or(
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "role",
+                    Col("role"),
                     Value::String("admin".to_string()),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "role",
+                    Col("role"),
                     Value::String("moderator".to_string()),
                 ))),
             ),
@@ -96,7 +106,7 @@ mod tests {
     fn test_select_with_in_condition() {
         let where_clause = WhereClause {
             clause: WhereClauseType::Condition(Condition::In(
-                "status",
+                Col("status"),
                 vec![
                     Value::String("pending".to_string()),
                     Value::String("active".to_string()),
@@ -116,7 +126,7 @@ mod tests {
     fn test_select_with_like_condition() {
         let where_clause = WhereClause {
             clause: WhereClauseType::Condition(Condition::Like(
-                "email",
+                Col("email"),
                 Value::String("%@gmail.com".to_string()),
             )),
         };
@@ -130,7 +140,7 @@ mod tests {
     #[test]
     fn test_select_with_is_null() {
         let where_clause = WhereClause {
-            clause: WhereClauseType::Condition(Condition::IsNull("deleted_at")),
+            clause: WhereClauseType::Condition(Condition::IsNull(Col("deleted_at"))),
         };
         let select = Select::new("posts")
             .add_column("title")
@@ -143,7 +153,7 @@ mod tests {
     fn test_select_with_not_condition() {
         let where_clause = WhereClause {
             clause: WhereClauseType::Not(Box::new(WhereClauseType::Condition(Condition::Eq(
-                "banned",
+                Col("banned"),
                 Value::Bool(true),
             )))),
         };
@@ -160,16 +170,16 @@ mod tests {
             clause: WhereClauseType::And(
                 Box::new(WhereClauseType::Or(
                     Box::new(WhereClauseType::Condition(Condition::Eq(
-                        "role",
+                        Col("role"),
                         Value::String("admin".to_string()),
                     ))),
                     Box::new(WhereClauseType::Condition(Condition::Eq(
-                        "role",
+                        Col("role"),
                         Value::String("moderator".to_string()),
                     ))),
                 )),
                 Box::new(WhereClauseType::Condition(Condition::Gt(
-                    "experience",
+                    Col("experience"),
                     Value::Int(5),
                 ))),
             ),
