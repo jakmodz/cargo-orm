@@ -4,8 +4,18 @@ mod tests {
     use corrosion_orm_core::{
         prelude::{Delete, QueryContext, TableSchema, ToSql, Value},
         query::where_clause::WhereClause,
+        types::ColumnTrait,
     };
-    fn render_delete(delete: Delete) -> (String, Vec<Value>) {
+
+    #[derive(Clone, Copy, Debug)]
+    pub struct Col(&'static str);
+    impl ColumnTrait for Col {
+        fn as_str(&self) -> &'static str {
+            self.0
+        }
+    }
+
+    fn render_delete(delete: Delete<Col>) -> (String, Vec<Value>) {
         let mut ctx = QueryContext::new();
         delete.to_sql(&mut ctx, &MockSqliteDialect);
         (ctx.sql, ctx.values)
@@ -13,7 +23,7 @@ mod tests {
 
     #[test]
     fn test_delete_simple() {
-        let delete = Delete::new("users").where_clause(WhereClause::eq("id", 1));
+        let delete = Delete::new("users").where_clause(WhereClause::eq(Col("id"), 1));
         let (sql, values) = render_delete(delete);
         insta::assert_snapshot!(sql, @"DELETE FROM users WHERE id = ?");
         assert_eq!(values.len(), 1)
@@ -21,8 +31,8 @@ mod tests {
     #[test]
     fn test_delete_complex() {
         let delete = Delete::new("users").where_clause(WhereClause::and(
-            WhereClause::eq("id", 1),
-            WhereClause::eq("name", String::from("John")),
+            WhereClause::eq(Col("id"), 1),
+            WhereClause::eq(Col("name"), String::from("John")),
         ));
         let (sql, values) = render_delete(delete);
         insta::assert_snapshot!(sql, @"DELETE FROM users WHERE id = ? AND name = ?");
@@ -31,7 +41,7 @@ mod tests {
     #[test]
     fn test_from_schema() {
         let schema = User::get_schema();
-        let delete = Delete::from(&schema).where_clause(WhereClause::eq("id", 1));
+        let delete = Delete::from(&schema).where_clause(WhereClause::eq(Col("id"), 1));
         let (sql, values) = render_delete(delete);
         insta::assert_snapshot!(sql, @"DELETE FROM users WHERE id = ?");
         assert_eq!(values.len(), 1)

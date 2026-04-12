@@ -5,7 +5,63 @@ mod tests {
     use corrosion_orm_core::query::query_type::{QueryContext, Value};
     use corrosion_orm_core::query::to_sql::ToSql;
     use corrosion_orm_core::query::where_clause::{Condition, WhereClause, WhereClauseType};
-    fn render_clause(clause: WhereClauseType) -> (String, Vec<Value>) {
+
+    #[derive(Clone, Copy)]
+    pub enum TestColumn {
+        Age,
+        Status,
+        Price,
+        Score,
+        Rating,
+        Email,
+        Name,
+        Category,
+        DeletedAt,
+        Role,
+        Verified,
+        Premium,
+        Admin,
+        Moderator,
+        Experience,
+        Deleted,
+        Banned,
+        Violations,
+        Archived,
+        Active,
+        Suspended,
+    }
+
+    impl corrosion_orm_core::types::column_trait::ColumnTrait for TestColumn {
+        fn as_str(&self) -> &'static str {
+            match self {
+                Self::Age => "age",
+                Self::Status => "status",
+                Self::Price => "price",
+                Self::Score => "score",
+                Self::Rating => "rating",
+                Self::Email => "email",
+                Self::Name => "name",
+                Self::Category => "category",
+                Self::DeletedAt => "deleted_at",
+                Self::Role => "role",
+                Self::Verified => "verified",
+                Self::Premium => "premium",
+                Self::Admin => "admin",
+                Self::Moderator => "moderator",
+                Self::Experience => "experience",
+                Self::Deleted => "deleted",
+                Self::Banned => "banned",
+                Self::Violations => "violations",
+                Self::Archived => "archived",
+                Self::Active => "active",
+                Self::Suspended => "suspended",
+            }
+        }
+    }
+
+    fn render_clause<C: corrosion_orm_core::types::column_trait::ColumnTrait>(
+        clause: WhereClauseType<C>,
+    ) -> (String, Vec<Value>) {
         let mut ctx = QueryContext::new();
         let dialect = MockSqliteDialect;
         clause.to_sql(&mut ctx, &dialect);
@@ -14,7 +70,7 @@ mod tests {
 
     #[test]
     fn test_simple_eq() {
-        let clause = WhereClauseType::Condition(Condition::Eq("age", Value::Int(18)));
+        let clause = WhereClauseType::Condition(Condition::Eq(TestColumn::Age, Value::Int(18)));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"age = ?");
         assert_eq!(values.len(), 1);
@@ -23,7 +79,7 @@ mod tests {
     #[test]
     fn test_simple_ne() {
         let clause = WhereClauseType::Condition(Condition::Ne(
-            "status",
+            TestColumn::Status,
             Value::String("inactive".to_string()),
         ));
         let (sql, values) = render_clause(clause);
@@ -33,7 +89,7 @@ mod tests {
 
     #[test]
     fn test_simple_lt() {
-        let clause = WhereClauseType::Condition(Condition::Lt("price", Value::Int(100)));
+        let clause = WhereClauseType::Condition(Condition::Lt(TestColumn::Price, Value::Int(100)));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"price < ?");
         assert_eq!(values.len(), 1);
@@ -41,7 +97,7 @@ mod tests {
 
     #[test]
     fn test_simple_gt() {
-        let clause = WhereClauseType::Condition(Condition::Gt("score", Value::Int(50)));
+        let clause = WhereClauseType::Condition(Condition::Gt(TestColumn::Score, Value::Int(50)));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"score > ?");
         assert_eq!(values.len(), 1);
@@ -49,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_simple_lte() {
-        let clause = WhereClauseType::Condition(Condition::Lte("age", Value::Int(65)));
+        let clause = WhereClauseType::Condition(Condition::Lte(TestColumn::Age, Value::Int(65)));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"age <= ?");
         assert_eq!(values.len(), 1);
@@ -57,7 +113,7 @@ mod tests {
 
     #[test]
     fn test_simple_gte() {
-        let clause = WhereClauseType::Condition(Condition::Gte("rating", Value::Int(4)));
+        let clause = WhereClauseType::Condition(Condition::Gte(TestColumn::Rating, Value::Int(4)));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"rating >= ?");
         assert_eq!(values.len(), 1);
@@ -66,7 +122,7 @@ mod tests {
     #[test]
     fn test_simple_like() {
         let clause = WhereClauseType::Condition(Condition::Like(
-            "email",
+            TestColumn::Email,
             Value::String("%@gmail.com".to_string()),
         ));
         let (sql, values) = render_clause(clause);
@@ -77,7 +133,7 @@ mod tests {
     #[test]
     fn test_simple_not_like() {
         let clause = WhereClauseType::Condition(Condition::NotLike(
-            "name",
+            TestColumn::Name,
             Value::String("test%".to_string()),
         ));
         let (sql, values) = render_clause(clause);
@@ -88,7 +144,7 @@ mod tests {
     #[test]
     fn test_simple_in() {
         let clause = WhereClauseType::Condition(Condition::In(
-            "status",
+            TestColumn::Status,
             vec![
                 Value::String("active".to_string()),
                 Value::String("pending".to_string()),
@@ -102,7 +158,7 @@ mod tests {
     #[test]
     fn test_simple_not_in() {
         let clause = WhereClauseType::Condition(Condition::NotIn(
-            "category",
+            TestColumn::Category,
             vec![Value::Int(1), Value::Int(2), Value::Int(3)],
         ));
         let (sql, values) = render_clause(clause);
@@ -112,15 +168,18 @@ mod tests {
 
     #[test]
     fn test_simple_is_null() {
-        let clause = WhereClauseType::Condition(Condition::IsNull("deleted_at"));
+        let clause = WhereClauseType::Condition(Condition::IsNull(TestColumn::DeletedAt));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"deleted_at IS NULL");
         assert_eq!(values.len(), 0);
     }
     #[test]
     fn test_simple_between() {
-        let clause =
-            WhereClauseType::Condition(Condition::Between("age", Value::Int(18), Value::Int(30)));
+        let clause = WhereClauseType::Condition(Condition::Between(
+            TestColumn::Age,
+            Value::Int(18),
+            Value::Int(30),
+        ));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"age BETWEEN ? AND ?");
         assert_eq!(values.len(), 2);
@@ -129,11 +188,11 @@ mod tests {
     fn test_and_two_conditions() {
         let clause = WhereClauseType::And(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "age",
+                TestColumn::Age,
                 Value::Int(18),
             ))),
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "status",
+                TestColumn::Status,
                 Value::String("active".to_string()),
             ))),
         );
@@ -146,16 +205,16 @@ mod tests {
     fn test_and_three_conditions() {
         let clause = WhereClauseType::And(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "age",
+                TestColumn::Age,
                 Value::Int(18),
             ))),
             Box::new(WhereClauseType::And(
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "status",
+                    TestColumn::Status,
                     Value::String("active".to_string()),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Gt(
-                    "score",
+                    TestColumn::Score,
                     Value::Int(50),
                 ))),
             )),
@@ -169,11 +228,11 @@ mod tests {
     fn test_or_two_conditions() {
         let clause = WhereClauseType::Or(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "role",
+                TestColumn::Role,
                 Value::String("admin".to_string()),
             ))),
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "role",
+                TestColumn::Role,
                 Value::String("moderator".to_string()),
             ))),
         );
@@ -186,16 +245,16 @@ mod tests {
     fn test_or_three_conditions() {
         let clause = WhereClauseType::Or(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "status",
+                TestColumn::Status,
                 Value::String("pending".to_string()),
             ))),
             Box::new(WhereClauseType::Or(
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "status",
+                    TestColumn::Status,
                     Value::String("review".to_string()),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "status",
+                    TestColumn::Status,
                     Value::String("approved".to_string()),
                 ))),
             )),
@@ -211,16 +270,16 @@ mod tests {
         let clause = WhereClauseType::And(
             Box::new(WhereClauseType::Or(
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "age",
+                    TestColumn::Age,
                     Value::Int(18),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "age",
+                    TestColumn::Age,
                     Value::Int(21),
                 ))),
             )),
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "status",
+                TestColumn::Status,
                 Value::String("active".to_string()),
             ))),
         );
@@ -234,16 +293,16 @@ mod tests {
         // a AND (b OR c)
         let clause = WhereClauseType::And(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "verified",
+                TestColumn::Verified,
                 Value::Bool(true),
             ))),
             Box::new(WhereClauseType::Or(
                 Box::new(WhereClauseType::Condition(Condition::Gt(
-                    "score",
+                    TestColumn::Score,
                     Value::Int(80),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "premium",
+                    TestColumn::Premium,
                     Value::Bool(true),
                 ))),
             )),
@@ -258,16 +317,16 @@ mod tests {
         // a OR (b AND c) - AND has higher precedence, so no extra parens needed
         let clause = WhereClauseType::Or(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "admin",
+                TestColumn::Admin,
                 Value::Bool(true),
             ))),
             Box::new(WhereClauseType::And(
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "moderator",
+                    TestColumn::Moderator,
                     Value::Bool(true),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Gt(
-                    "experience",
+                    TestColumn::Experience,
                     Value::Int(5),
                 ))),
             )),
@@ -284,27 +343,27 @@ mod tests {
             Box::new(WhereClauseType::And(
                 Box::new(WhereClauseType::Or(
                     Box::new(WhereClauseType::Condition(Condition::Eq(
-                        "status",
+                        TestColumn::Status,
                         Value::String("active".to_string()),
                     ))),
                     Box::new(WhereClauseType::Condition(Condition::Eq(
-                        "status",
+                        TestColumn::Status,
                         Value::String("pending".to_string()),
                     ))),
                 )),
                 Box::new(WhereClauseType::Or(
                     Box::new(WhereClauseType::Condition(Condition::Gt(
-                        "age",
+                        TestColumn::Age,
                         Value::Int(18),
                     ))),
                     Box::new(WhereClauseType::Condition(Condition::Eq(
-                        "premium",
+                        TestColumn::Premium,
                         Value::Bool(true),
                     ))),
                 )),
             )),
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "deleted",
+                TestColumn::Deleted,
                 Value::Bool(false),
             ))),
         );
@@ -316,7 +375,7 @@ mod tests {
     #[test]
     fn test_not_simple_condition() {
         let clause = WhereClauseType::Not(Box::new(WhereClauseType::Condition(Condition::IsNull(
-            "email",
+            TestColumn::Email,
         ))));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"NOT email IS NULL");
@@ -328,11 +387,11 @@ mod tests {
         // NOT (a AND b)
         let clause = WhereClauseType::Not(Box::new(WhereClauseType::And(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "banned",
+                TestColumn::Banned,
                 Value::Bool(true),
             ))),
             Box::new(WhereClauseType::Condition(Condition::Gt(
-                "violations",
+                TestColumn::Violations,
                 Value::Int(5),
             ))),
         )));
@@ -346,11 +405,11 @@ mod tests {
         // NOT (a OR b)
         let clause = WhereClauseType::Not(Box::new(WhereClauseType::Or(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "status",
+                TestColumn::Status,
                 Value::String("deleted".to_string()),
             ))),
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "archived",
+                TestColumn::Archived,
                 Value::Bool(true),
             ))),
         )));
@@ -363,7 +422,7 @@ mod tests {
     fn test_not_not() {
         // NOT NOT a (double negation)
         let clause = WhereClauseType::Not(Box::new(WhereClauseType::Not(Box::new(
-            WhereClauseType::Condition(Condition::Eq("active", Value::Bool(true))),
+            WhereClauseType::Condition(Condition::Eq(TestColumn::Active, Value::Bool(true))),
         ))));
         let (sql, values) = render_clause(clause);
         insta::assert_snapshot!(sql, @"NOT NOT active = ?");
@@ -375,16 +434,16 @@ mod tests {
         // a AND NOT (b OR c)
         let clause = WhereClauseType::And(
             Box::new(WhereClauseType::Condition(Condition::Eq(
-                "verified",
+                TestColumn::Verified,
                 Value::Bool(true),
             ))),
             Box::new(WhereClauseType::Not(Box::new(WhereClauseType::Or(
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "suspended",
+                    TestColumn::Suspended,
                     Value::Bool(true),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "banned",
+                    TestColumn::Banned,
                     Value::Bool(true),
                 ))),
             )))),
@@ -399,11 +458,11 @@ mod tests {
         let clause = WhereClause {
             clause: WhereClauseType::And(
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "age",
+                    TestColumn::Age,
                     Value::Int(18),
                 ))),
                 Box::new(WhereClauseType::Condition(Condition::Eq(
-                    "active",
+                    TestColumn::Active,
                     Value::Bool(true),
                 ))),
             ),
@@ -415,7 +474,7 @@ mod tests {
     }
     #[test]
     fn test_simple_condition_from_entity_column() {
-        let clause: WhereClause<'_> = user::COLUMN.name.eq(Value::String("John".to_string()));
+        let clause: WhereClause<_> = user::COLUMN.name.eq(Value::String("John".to_string()));
         let (sql, values) = render_clause(clause.clause);
         insta::assert_snapshot!(sql, @"name = ?");
         assert_eq!(values.len(), 1);
@@ -423,7 +482,7 @@ mod tests {
     }
     #[test]
     fn test_contains_from_entity_column() {
-        let clause: WhereClause<'_> = user::COLUMN
+        let clause: WhereClause<_> = user::COLUMN
             .name
             .contains(Value::String("John".to_string()));
         let (sql, values) = render_clause(clause.clause);
@@ -434,7 +493,7 @@ mod tests {
     }
     #[test]
     fn test_starts_with_entity_column() {
-        let clause: WhereClause<'_> = user::COLUMN
+        let clause: WhereClause<_> = user::COLUMN
             .name
             .starts_with(Value::String("John".to_string()));
         let (sql, values) = render_clause(clause.clause);
@@ -444,7 +503,7 @@ mod tests {
     }
     #[test]
     fn test_numeric_column_entity() {
-        let clause: WhereClause<'_> = user::COLUMN.id.eq(30);
+        let clause: WhereClause<_> = user::COLUMN.id.eq(30);
         let (sql, values) = render_clause(clause.clause);
         insta::assert_snapshot!(sql, @"id = ?");
         assert_eq!(values.len(), 1);

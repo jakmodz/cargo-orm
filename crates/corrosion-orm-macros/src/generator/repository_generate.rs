@@ -4,7 +4,10 @@ use quote::quote;
 pub(crate) fn generate_repository(table: &TableData) -> proc_macro2::TokenStream {
     let ident = &table.ident;
     let primary_key_ty = &table.primary_key.ty;
-
+    let mod_name = syn::Ident::new(
+        &table.ident.to_string().to_lowercase(),
+        proc_macro2::Span::call_site(),
+    );
     let mut col_names = vec![table.primary_key.name.as_str()];
     for field in &table.fields {
         col_names.push(field.name.as_str());
@@ -12,6 +15,8 @@ pub(crate) fn generate_repository(table: &TableData) -> proc_macro2::TokenStream
 
     let pk_ident = &table.primary_key.iden;
     let field_idents: Vec<_> = table.fields.iter().map(|f| &f.iden).collect();
+    let pk_column_variant =
+        syn::Ident::new(&table.primary_key.name, proc_macro2::Span::call_site());
 
     quote! {
         impl #ident{
@@ -27,7 +32,7 @@ pub(crate) fn generate_repository(table: &TableData) -> proc_macro2::TokenStream
 
         impl<Db: corrosion_orm_core::driver::executor::Executor> corrosion_orm_core::model::repository::Repo<Db> for #ident {
             type PrimaryKey = #primary_key_ty;
-
+            type Column = #mod_name::Column;
             async fn save(&self, db: &mut Db) -> Result<Self, corrosion_orm_core::error::CorrosionOrmError> {
                 use corrosion_orm_core::query::to_sql::ToSql;
                 use corrosion_orm_core::schema::table::TableSchema;
@@ -36,9 +41,9 @@ pub(crate) fn generate_repository(table: &TableData) -> proc_macro2::TokenStream
 
                 let schema = Self::get_schema();
 
-                let check_query = corrosion_orm_core::query::select::Select::from(&schema)
+                let check_query = corrosion_orm_core::query::select::Select::<#mod_name::Column>::from(&schema)
                     .where_clause(
-                        WhereClause::eq(&schema.primary_key.name, self.#pk_ident.clone()),
+                        WhereClause::eq(#mod_name::Column::#pk_column_variant, self.#pk_ident.clone()),
                 );
 
                 let mut ctx_control = corrosion_orm_core::query::query_type::QueryContext::new();
@@ -52,15 +57,15 @@ pub(crate) fn generate_repository(table: &TableData) -> proc_macro2::TokenStream
                     insert_query.to_sql(&mut ctx, db.get_dialect());
                     db.execute_query(&mut ctx).await?;
                 } else {
-                    let mut update_query = corrosion_orm_core::query::update::Update::from(&schema)
+                    let mut update_query = corrosion_orm_core::query::update::Update::<#mod_name::Column>::from(&schema)
                         .values(self.get_values_from_self())
-                        .where_clause(WhereClause::eq(&schema.primary_key.name, self.#pk_ident.clone()));
+                        .where_clause(WhereClause::eq(#mod_name::Column::#pk_column_variant, self.#pk_ident.clone()));
                     update_query.to_sql(&mut ctx, db.get_dialect());
                     db.execute_query(&mut ctx).await?;
                 }
                 let mut fetch_ctx = QueryContext::new();
-                let fetch_query = corrosion_orm_core::query::select::Select::from(&schema)
-                    .where_clause(WhereClause::eq(&schema.primary_key.name, self.#pk_ident.clone()));
+                let fetch_query = corrosion_orm_core::query::select::Select::<#mod_name::Column>::from(&schema)
+                    .where_clause(WhereClause::eq(#mod_name::Column::#pk_column_variant, self.#pk_ident.clone()));
                 fetch_query.to_sql(&mut fetch_ctx, db.get_dialect());
                 let saved = db.fetch_optional::<Self>(&mut fetch_ctx).await?;
 
@@ -73,7 +78,7 @@ pub(crate) fn generate_repository(table: &TableData) -> proc_macro2::TokenStream
                 use corrosion_orm_core::query::query_type::QueryContext;
                 let mut ctx = QueryContext::new();
                 let schema = Self::get_schema();
-                let query = corrosion_orm_core::query::select::Select::from(&schema);
+                let query = corrosion_orm_core::query::select::Select::<#mod_name::Column>::from(&schema);
                 query.to_sql(&mut ctx, db.get_dialect());
                 let results = db.fetch_all::<Self>(&mut ctx).await?;
                 Ok(results)
@@ -85,8 +90,8 @@ pub(crate) fn generate_repository(table: &TableData) -> proc_macro2::TokenStream
                 use corrosion_orm_core::query::query_type::QueryContext;
                 let mut ctx = QueryContext::new();
                 let schema = Self::get_schema();
-                let query = corrosion_orm_core::query::select::Select::from(&schema)
-                    .where_clause(WhereClause::eq(&schema.primary_key.name, id.clone()));
+                let query = corrosion_orm_core::query::select::Select::<#mod_name::Column>::from(&schema)
+                    .where_clause(WhereClause::eq(#mod_name::Column::#pk_column_variant, id.clone()));
                 query.to_sql(&mut ctx, db.get_dialect());
                 let result = db.fetch_optional::<Self>(&mut ctx).await?;
                 if let Some(result) = result {
@@ -104,17 +109,17 @@ pub(crate) fn generate_repository(table: &TableData) -> proc_macro2::TokenStream
 
                 let mut ctx = QueryContext::new();
                 let schema = Self::get_schema();
-                let mut delete_query = Delete::from(&schema)
-                    .where_clause(WhereClause::eq(&schema.primary_key.name, self.#pk_ident.clone()));
+                let mut delete_query = Delete::<#mod_name::Column>::from(&schema)
+                    .where_clause(WhereClause::eq(#mod_name::Column::#pk_column_variant, self.#pk_ident.clone()));
                 delete_query.to_sql(&mut ctx, db.get_dialect());
                 db.execute_query(&mut ctx).await?;
                 Ok(())
             }
-            fn find<'query>() -> corrosion_orm_core::model::Finder<'query, Self, Db> {
+            fn find<'query>() -> corrosion_orm_core::model::Finder<'query, Self, Db, Self::Column> {
                 use corrosion_orm_core::query::select::Select;
                 use corrosion_orm_core::schema::table::TableSchema;
                 let schema = Self::get_schema();
-                let select_query = Select::from(schema);
+                let select_query = Select::<#mod_name::Column>::from(schema);
                 corrosion_orm_core::model::Finder::new(select_query)
             }
         }

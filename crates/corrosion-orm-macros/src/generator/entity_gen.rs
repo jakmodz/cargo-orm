@@ -88,7 +88,7 @@ pub(crate) fn generate_entity(table: &TableData) -> proc_macro2::TokenStream {
         &primary_key_field.name.to_lowercase(),
         proc_macro2::Span::call_site(),
     );
-    let column_name = &primary_key_field.name;
+    let column_name = &primary_key_field.name; // <- "id"
 
     let sql_type = get_sql_type_from_rust_type(&primary_key_field.ty);
     let wrapper_type = sql_type_to_wrapper(&sql_type);
@@ -96,7 +96,7 @@ pub(crate) fn generate_entity(table: &TableData) -> proc_macro2::TokenStream {
     for field in &table.fields {
         let field_name_lower =
             syn::Ident::new(&field.name.to_lowercase(), proc_macro2::Span::call_site());
-        let column_name = &field.name;
+        let column_name = &field.name; // <- here we define a new `column_name` for each field
 
         let sql_type = get_sql_type_from_rust_type(&field.ty);
         let wrapper_type = sql_type_to_wrapper(&sql_type);
@@ -105,13 +105,14 @@ pub(crate) fn generate_entity(table: &TableData) -> proc_macro2::TokenStream {
     }
 
     let struct_fields = column_defs.iter().map(|(field_name, _, wrapper_type)| {
-        quote! { pub #field_name: #wrapper_type }
+        quote! { pub #field_name: #wrapper_type<Column> }
     });
 
     let const_inits = column_defs
         .iter()
-        .map(|(field_name, column_name, wrapper_type)| {
-            quote! { #field_name: #wrapper_type::new(#column_name) }
+        .map(|(field_name, column_name_str, wrapper_type)| {
+            let variant_ident = syn::Ident::new(column_name_str, proc_macro2::Span::call_site());
+            quote! { #field_name: #wrapper_type::new(Column::#variant_ident) }
         });
 
     let columns_struct = if !column_defs.is_empty() {
@@ -131,8 +132,45 @@ pub(crate) fn generate_entity(table: &TableData) -> proc_macro2::TokenStream {
         }
     };
 
+    let column_enum_def = if !column_defs.is_empty() {
+        let variants = column_defs.iter().map(|(_, column_name, _)| {
+            let variant_ident = syn::Ident::new(column_name, proc_macro2::Span::call_site());
+            quote! {
+                #variant_ident
+            }
+        });
+        let variants = variants.collect::<Vec<_>>();
+        let column_names = column_defs
+            .iter()
+            .map(|(_, column_name, _)| column_name)
+            .collect::<Vec<_>>();
+        let columns_enum_def = quote! {
+            #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+            #[allow(non_camel_case_types)]
+            pub enum Column {
+                #(#variants),*
+            }
+
+            impl corrosion_orm_core::types::ColumnTrait for Column {
+                fn as_str(&self) -> &'static str {
+                    match self {
+                        #(Self::#variants => #column_names),*
+                    }
+                }
+            }
+        };
+        columns_enum_def
+    } else {
+        quote! {
+            #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+            pub enum Column {
+            }
+        }
+    };
+
     quote! {
         pub mod #ident {
+            #column_enum_def
             #columns_struct
         }
     }

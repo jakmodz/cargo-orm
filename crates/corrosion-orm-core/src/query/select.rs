@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use crate::{
     dialect::sql_dialect::SqlDialect, query::to_sql::ToSql, schema::table::TableSchemaModel,
+    types::ColumnTrait,
 };
 
 use super::where_clause::WhereClause;
@@ -11,30 +12,38 @@ use super::where_clause::WhereClause;
 ///
 /// Builds SELECT queries with optional WHERE clauses and LIMIT.
 ///
-/// # Examples
+/// The `C` generic type must implement `ColumnTrait` to guarantee type-safe
+/// column references in the `WhereClause`. This replaces raw strings with
+/// compile-time validated enum variants.
 ///
-/// Select all columns:
 /// ```
 /// use corrosion_orm_core::query::select::Select;
-/// let query = Select::new("users");
-/// ```
 ///
-/// Select specific columns with limit:
+/// #[derive(Clone, Copy)]
+/// pub enum UserColumn {
+///     Id,
+///     Name,
+/// }
+///
+/// impl corrosion_orm_core::types::ColumnTrait for UserColumn {
+///     fn as_str(&self) -> &'static str {
+///         match self {
+///             Self::Id => "id",
+///             Self::Name => "name",
+///         }
+///     }
+/// }
+///
+/// let select = Select::<UserColumn>::new("users");
 /// ```
-/// use corrosion_orm_core::query::select::Select;
-/// let query = Select::new("users")
-///     .add_column("id")
-///     .add_column("name")
-///     .limit(10);
-/// ```
-pub struct Select<'query> {
+pub struct Select<'query, C: ColumnTrait> {
     table: Cow<'query, str>,
     columns: Vec<Cow<'query, str>>,
-    where_clause: Option<WhereClause<'query>>,
+    where_clause: Option<WhereClause<C>>,
     limit: Option<usize>,
 }
 
-impl<'col> Select<'col> {
+impl<'col, C: ColumnTrait> Select<'col, C> {
     pub fn new<T: Into<Cow<'col, str>>>(table: T) -> Self {
         Self {
             table: table.into(),
@@ -43,7 +52,7 @@ impl<'col> Select<'col> {
             limit: None,
         }
     }
-    pub fn add_column<C: Into<Cow<'col, str>>>(mut self, column: C) -> Self {
+    pub fn add_column<Column: Into<Cow<'col, str>>>(mut self, column: Column) -> Self {
         self.columns.push(column.into());
         self
     }
@@ -55,7 +64,7 @@ impl<'col> Select<'col> {
         self.limit = Some(limit);
         self
     }
-    pub fn where_clause(mut self, where_clause: WhereClause<'col>) -> Self {
+    pub fn where_clause(mut self, where_clause: WhereClause<C>) -> Self {
         self.where_clause = Some(where_clause);
         self
     }
@@ -68,7 +77,7 @@ impl<'col> Select<'col> {
         &self.columns
     }
     #[cfg(feature = "test-utils")]
-    pub fn get_where_clause(&self) -> Option<&WhereClause<'col>> {
+    pub fn get_where_clause(&self) -> Option<&WhereClause<C>> {
         self.where_clause.as_ref()
     }
     #[cfg(feature = "test-utils")]
@@ -76,7 +85,7 @@ impl<'col> Select<'col> {
         self.limit
     }
 }
-impl ToSql for Select<'_> {
+impl<C: ColumnTrait> ToSql for Select<'_, C> {
     fn to_sql(&self, ctx: &mut super::query_type::QueryContext, _dialect: &dyn SqlDialect) {
         ctx.sql.push_str(&format!(
             "SELECT {} FROM {}",
@@ -96,7 +105,7 @@ impl ToSql for Select<'_> {
         }
     }
 }
-impl<'col> From<&'col TableSchemaModel> for Select<'col> {
+impl<'col, C: ColumnTrait> From<&'col TableSchemaModel> for Select<'col, C> {
     fn from(schema: &'col TableSchemaModel) -> Self {
         Self {
             table: Cow::Borrowed(&schema.name),
@@ -110,7 +119,7 @@ impl<'col> From<&'col TableSchemaModel> for Select<'col> {
         }
     }
 }
-impl<'col> From<TableSchemaModel> for Select<'col> {
+impl<'col, C: ColumnTrait> From<TableSchemaModel> for Select<'col, C> {
     fn from(schema: TableSchemaModel) -> Self {
         let mut columns = Vec::with_capacity(1 + schema.fields.len());
 
@@ -126,21 +135,5 @@ impl<'col> From<TableSchemaModel> for Select<'col> {
             where_clause: None,
             limit: None,
         }
-    }
-}
-
-mod tests {
-
-    #[test]
-    fn test_select_create() {
-        use super::*;
-        let select = Select::new("users")
-            .add_column("id")
-            .add_column("name")
-            .limit(10);
-        assert_eq!(select.table, "users");
-        assert_eq!(select.columns, &["id", "name"]);
-        assert_eq!(select.where_clause, None);
-        assert_eq!(select.limit, Some(10));
     }
 }
