@@ -3,12 +3,12 @@ use std::marker::PhantomData;
 
 use crate::{
     CorrosionOrmError, Executor,
+    model::{cursor_paginator::CursorPaginator, paginator::Paginator},
     prelude::QueryContext,
     query::{Select, ToSql, WhereClause, order_by::OrderBy},
     types::ColumnTrait,
 };
 
-#[derive(Clone)]
 /// Query result set from a database query for find() method.
 ///
 /// This struct is now generic over C: ColumnTrait to ensure model-level type safety.
@@ -17,7 +17,18 @@ pub struct Finder<'query, T, E: Executor, C: ColumnTrait> {
     _entity: PhantomData<T>,
     _executor: PhantomData<E>,
 }
-
+impl<'query, T, E: Executor, C: ColumnTrait> Clone for Finder<'query, T, E, C>
+where
+    Select<'query, C>: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            query: self.query.clone(),
+            _entity: PhantomData,
+            _executor: PhantomData,
+        }
+    }
+}
 impl<'query, T, E: Executor, C: ColumnTrait> Finder<'query, T, E, C>
 where
     T: Send + Unpin + for<'r> FromRow<'r, sqlx::sqlite::SqliteRow>,
@@ -51,7 +62,6 @@ where
         }
     }
     /// Adds an order to order clause in the query.
-    ///
     pub fn add_order_by(self, order_by: OrderBy<C>) -> Self {
         Self {
             query: self.query.add_order_by(order_by),
@@ -59,7 +69,25 @@ where
             _executor: PhantomData,
         }
     }
-
+    /// Sets the offset for the query.
+    pub fn offset(self, offset: usize) -> Self {
+        Self {
+            query: self.query.offset(offset),
+            _entity: PhantomData,
+            _executor: PhantomData,
+        }
+    }
+    /// Returns a paginator for this finder with the given page size.
+    pub fn paginate(self, page_size: usize) -> Paginator<'query, T, E, C> {
+        Paginator::new(self, page_size)
+    }
+    /// Returns a cursor paginator for this finder with the given page size.
+    pub fn cursor_paginate(self, page_size: usize) -> CursorPaginator<'query, T, E, C>
+    where
+        T: Clone,
+    {
+        CursorPaginator::new(self, page_size)
+    }
     /// Fetches a single row from the query.
     pub async fn one(self, executor: &mut E) -> Result<T, CorrosionOrmError> {
         let mut ctx = QueryContext::new();
