@@ -139,9 +139,9 @@ mod tests {
         let mut paginator = User::find().add_order_by(user::COLUMN.id.asc()).paginate(2);
         for i in 0..3 {
             if let Some(page) = paginator.fetch_next(&mut conn).await? {
-                assert_eq!(page[0].id, (i * 2 + 1) as i32);
+                assert_eq!(page[0].id, (i * 2 + 1));
                 if page.len() > 1 {
-                    assert_eq!(page[1].id, (i * 2 + 2) as i32);
+                    assert_eq!(page[1].id, (i * 2 + 2));
                 }
             }
         }
