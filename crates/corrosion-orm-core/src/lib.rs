@@ -5,6 +5,7 @@ pub mod model;
 pub mod query;
 pub mod schema;
 pub mod types;
+pub mod validation;
 
 pub use driver::executor::Executor;
 pub use error::CorrosionOrmError;

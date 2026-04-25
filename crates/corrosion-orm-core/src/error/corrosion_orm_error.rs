@@ -11,6 +11,8 @@ pub enum CorrosionOrmError {
     SchemaValidationErrors(#[from] SchemaValidationError),
     #[error(transparent)]
     DriverError(#[from] DriverError),
+    #[error(transparent)]
+    ValidationError(#[from] std::io::Error),
 }
 impl From<ConnectionConfigError> for CorrosionOrmError {
     fn from(e: ConnectionConfigError) -> Self {
