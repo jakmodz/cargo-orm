@@ -63,7 +63,14 @@ fn generate_validation_from_type(validation: &ValidationRule) -> TokenStream {
             quote! {
                 {
                     use corrosion_orm_core::validation::{PatternValidator, Validator};
-                    let validator = PatternValidator::new(#pattern_lit).expect("Invalid regex pattern");
+                    static VALIDATOR: corrosion_orm_core::once_cell::sync::Lazy<
+                        ::std::result::Result<PatternValidator, ::std::string::String>
+                    > = corrosion_orm_core::once_cell::sync::Lazy::new(|| {
+                        PatternValidator::new(#pattern_lit).map_err(|e| e.to_string())
+                    });
+                    let validator = VALIDATOR.as_ref().map_err(|e| {
+                        corrosion_orm_core::validation::ValidationError::CustomError { msg: e.clone() }
+                    })?;
                     validator.validate(#field_name, &self.#ident, #msg)?;
                 }
             }
@@ -73,8 +80,11 @@ fn generate_validation_from_type(validation: &ValidationRule) -> TokenStream {
             quote! {
                 {
                     use corrosion_orm_core::validation::{PatternValidator, Validator};
-                    let validator = PatternValidator::new(#email_pattern).expect("Email regex should be valid");
-                    validator.validate(#field_name, &self.#ident, #msg)?;
+                    static VALIDATOR: corrosion_orm_core::once_cell::sync::Lazy<PatternValidator> =
+                        corrosion_orm_core::once_cell::sync::Lazy::new(|| {
+                            PatternValidator::new(#email_pattern).expect("Email regex should be valid")
+                        });
+                    VALIDATOR.validate(#field_name, &self.#ident, #msg)?;
                 }
             }
         }
