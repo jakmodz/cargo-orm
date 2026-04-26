@@ -2,6 +2,7 @@ mod entity_gen;
 mod from_row_generate;
 mod repository_generate;
 mod schema_generate;
+pub mod validation_generate;
 use quote::quote;
 
 use crate::{

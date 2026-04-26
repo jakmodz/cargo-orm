@@ -4,7 +4,7 @@ mod query;
 mod repository_test;
 mod sqlite_tests;
 pub mod test_entities;
-
+mod validation_test;
 pub use test_entities::*;
 #[cfg(test)]
 mod tests {

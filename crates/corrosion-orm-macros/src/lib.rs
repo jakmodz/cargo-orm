@@ -1,11 +1,15 @@
 mod generator;
 mod model;
 mod utils;
+mod validation_parser;
 use crate::generator::generate_impl;
 use crate::model::TableData;
+use generator::validation_generate::generate_validations;
 use model::parse_model;
 use proc_macro::TokenStream;
-use syn::{DeriveInput, parse_macro_input};
+use quote::quote;
+use syn::{DeriveInput, ItemFn, Pat, parse_macro_input};
+use validation_parser::parser::parse_validation;
 
 /// Derive macro that generates ORM boilerplate for database entity.
 ///
@@ -123,4 +127,40 @@ pub fn model_derive(input: TokenStream) -> TokenStream {
     };
 
     generate_impl(&model)
+}
+#[proc_macro_derive(Validate, attributes(NotNull, Size, Pattern, Email))]
+pub fn validate_derive(input: TokenStream) -> TokenStream {
+    let mut ast = parse_macro_input!(input as DeriveInput);
+    let validations = match parse_validation(&mut ast) {
+        Ok(validations) => validations,
+        Err(e) => return e.into_compile_error().into(),
+    };
+
+    generate_validations(&ast.ident, validations).into()
+}
+#[proc_macro_attribute]
+pub fn validate_args(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut func = parse_macro_input!(item as ItemFn);
+    let mut validations = Vec::new();
+    for arg in func.sig.inputs.iter_mut() {
+        if let syn::FnArg::Typed(pat_type) = arg {
+            let has_valid = pat_type.attrs.iter().any(|a| a.path().is_ident("valid"));
+
+            if has_valid {
+                pat_type.attrs.retain(|a| !a.path().is_ident("valid"));
+            }
+            if let Pat::Ident(pat_ident) = &*pat_type.pat {
+                let arg_name = &pat_ident.ident;
+                validations.push(quote! { #arg_name.validate()?;});
+            }
+        }
+    }
+    if !validations.is_empty() {
+        let original_stms = func.block.stmts;
+        func.block = syn::parse_quote!({
+            #(#validations)*
+            #(#original_stms)*
+        });
+    }
+    quote! {#func}.into()
 }

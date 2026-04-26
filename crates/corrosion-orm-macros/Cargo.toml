@@ -15,3 +15,4 @@ deluxe= {workspace= true}
 anyhow = {workspace = true}
 corrosion-orm-core = {path = "../corrosion-orm-core"}
 chrono = {workspace = true}
+regex = {workspace = true}
