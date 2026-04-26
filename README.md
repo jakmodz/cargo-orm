@@ -38,16 +38,8 @@ use corrosion_orm_core::driver::sqlite_driver::SqliteDriver;
 use corrosion_orm_core::driver::connection_pool::ConnectionPool;
 use corrosion_orm_core::query::select::Select;
 
-// 1. Define models using the custom derive macro
-#[derive(Model, Debug)]
-#[corrosion(table_name = "users")]
-pub struct User {
-    #[corrosion(primary_key)]
-    pub id: i32,
-    pub username: String,
-    pub email: String,
-}
 
+// 1. Define model using the custom derive macro
 #[derive(Model,Debug)]
 #[Table(name = "users")]
 pub struct User {
