@@ -51,12 +51,12 @@ mod tests {
 
     #[test]
     fn test_phone_not_null() {
-        let user = User {
-            name: "".to_string(),
+        let phone = Phone {
+            phone: "".to_string(),
         };
         assert!(
-            user.validate().is_err(),
-            "Empty name should fail NotNull validation"
+            phone.validate().is_err(),
+            "Empty phone should fail NotNull validation"
         );
     }
 
@@ -103,7 +103,6 @@ mod tests {
             email: "invalid_email".to_string(),
             age: "".to_string(),
         };
-        dbg!(user.validate().is_err());
         assert!(user.validate().is_err());
         Ok(())
     }

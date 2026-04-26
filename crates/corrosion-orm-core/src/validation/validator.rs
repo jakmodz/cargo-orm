@@ -5,7 +5,7 @@ pub trait Validator<T> {
         &self,
         field_name: &str,
         value: &T,
-        msg: Option<&String>,
+        msg: Option<&str>,
     ) -> Result<(), ValidationError>;
 }
 
@@ -16,7 +16,7 @@ impl Validator<String> for NotNullValidator {
         &self,
         field_name: &str,
         value: &String,
-        msg: Option<&String>,
+        msg: Option<&str>,
     ) -> Result<(), ValidationError> {
         let err = msg.map_or(
             ValidationError::NullField {
@@ -38,7 +38,7 @@ impl<E> Validator<Option<E>> for NotNullValidator {
         &self,
         field_name: &str,
         value: &Option<E>,
-        msg: Option<&String>,
+        msg: Option<&str>,
     ) -> Result<(), ValidationError> {
         let err = msg.map_or(
             ValidationError::NullField {
@@ -65,7 +65,7 @@ impl Validator<String> for SizeValidator {
         &self,
         field_name: &str,
         value: &String,
-        msg: Option<&String>,
+        msg: Option<&str>,
     ) -> Result<(), ValidationError> {
         let err = msg.map_or(
             ValidationError::SizeError {
@@ -108,7 +108,7 @@ impl Validator<String> for PatternValidator {
         &self,
         field_name: &str,
         value: &String,
-        msg: Option<&String>,
+        msg: Option<&str>,
     ) -> Result<(), ValidationError> {
         let err = msg.map_or(
             ValidationError::PatternError {

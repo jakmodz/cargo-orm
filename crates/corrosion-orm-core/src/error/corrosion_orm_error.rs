@@ -1,6 +1,7 @@
 use crate::{
     driver::{connection_config::ConnectionConfigError, error::DriverError},
     schema::table::SchemaValidationError,
+    validation::ValidationError,
 };
 
 use thiserror::Error;
@@ -12,7 +13,7 @@ pub enum CorrosionOrmError {
     #[error(transparent)]
     DriverError(#[from] DriverError),
     #[error(transparent)]
-    ValidationError(#[from] std::io::Error),
+    ValidationError(#[from] ValidationError),
 }
 impl From<ConnectionConfigError> for CorrosionOrmError {
     fn from(e: ConnectionConfigError) -> Self {
